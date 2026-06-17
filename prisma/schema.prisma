@@ -8,14 +8,16 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
+  id        String     @id @default(cuid())
+  name      String
+  email     String     @unique
+  role      String     @default("USER")
+  customers Customer[]
+  createdAt DateTime   @default(now())
 }
 
 model Company {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   name      String
   customers Customer[]
 }
@@ -27,5 +29,7 @@ model Customer {
   phone     String?
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id])
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 }
