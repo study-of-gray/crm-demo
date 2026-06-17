@@ -12,72 +12,75 @@ async function main() {
 
     // 公司
     const company = await prisma.company.create({
-        data: {
-            name: "示例科技有限公司",
-        },
+        data: { name: "示例科技公司" },
     });
 
-    // 用户
+    // 管理员
+    const admin = await prisma.user.create({
+        data: {
+            name: "管理员",
+            email: "admin@example.com",
+            phone: "13800000000",
+            password: "123456",
+            role: "ADMIN",
+            companyId: company.id,
+        },
+    });
+    // 员工
+    const staff = await prisma.user.create({
+        data: {
+            name: "员工 A",
+            email: "staff@example.com",
+            phone: "13800000001",
+            password: "123456",
+            role: "STAFF",
+            companyId: company.id,
+        },
+    });
+    // 客户（来自 User）
     const user1 = await prisma.user.create({
         data: {
-            name: "张三",
-            email: "zhangsan@example.com",
-            role: "ADMIN",
+            name: "用户 A",
+            email: "customer@example.com",
+            phone: "13800000222",
+            password: "123456",
+            role: "USER",
         },
     });
     const user2 = await prisma.user.create({
         data: {
-            name: "李四",
-            email: "lisi@example.com",
+            name: "用户 B",
+            email: "customer3@example.com",
+            phone: "13800000333",
+            password: "123456",
             role: "USER",
         },
     });
     const user3 = await prisma.user.create({
         data: {
-            name: "王五",
-            email: "wangwu@example.com",
+            name: "用户 C",
+            email: "customer4@example.com",
+            phone: "13800000444",
+            password: "123456",
             role: "USER",
         },
     });
 
-    // 客户（关联 User）
-    await prisma.customer.create({
-        data: {
-            name: "客户 B",
-            email: "b@example.com",
-            phone: "13800000002",
-            company: {
-                connect: { id: company.id },
+    // 客户身份
+    await prisma.customer.createMany({
+        data: [
+            {
+                userId: user1.id,
+                companyId: company.id, // ✅ 可选
             },
-            user: {
-                connect: { id: user1.id }, // ✅ 关联张三
+            {
+                userId: user2.id,
+                companyId: company.id, // ✅ 可选
             },
-        },
-    });
-
-    await prisma.customer.create({
-        data: {
-            name: "客户 C",
-            email: "c@example.com",
-            phone: "13800000003",
-            company: {
-                connect: { id: company.id },
-            },
-            user: {
-                connect: { id: user2.id }, // ✅ 关联李四
-            },
-        },
-    });
-
-    await prisma.customer.create({
-        data: {
-            name: "客户 D",
-            email: "d@example.com",
-            phone: "13800000004",
-            user: {
-                connect: { id: user3.id }, // ✅ 关联王五
-            },
-        },
+            {
+                userId: user3.id,
+            }
+        ]
     });
 
     console.log("✅ User 与 Customer 对应关系已生成");

@@ -7,29 +7,39 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String     @id @default(cuid())
-  name      String
-  email     String     @unique
-  role      String     @default("USER")
-  customers Customer[]
-  createdAt DateTime   @default(now())
-}
-
 model Company {
   id        String     @id @default(cuid())
   name      String
-  customers Customer[]
+  users     User[] // 公司下的员工
+  createdAt DateTime   @default(now())
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  password  String
+  role      Role     @default(USER)
+  companyId String?
+  createdAt DateTime @default(now())
+
+  @@index([companyId])
+  @@index([email])
 }
 
 model Customer {
   id        String   @id @default(cuid())
-  name      String
-  email     String?
-  phone     String?
+  userId    String   @unique
   companyId String?
-  company   Company? @relation(fields: [companyId], references: [id])
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([companyId])
+}
+
+enum Role {
+  ADMIN // 系统管理员
+  STAFF // 普通员工
+  USER // 客户账号
 }
