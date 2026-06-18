@@ -1,4 +1,3 @@
-import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import {
     Table,
@@ -18,19 +17,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createCustomer } from "@/actions/customer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createCustomer, getCustomers } from "@/actions/customer";
 
 export default async function CustomersPage() {
-    const customers = await prisma.customer.findMany({
-        // where: {
-        //     company: null,
-        // },
-        // include: {
-        //     user: true,
-        // },
-        orderBy: { createdAt: "desc" },
-    });
+    const customers = await getCustomers();
 
     return (
         <main className="p-6 space-y-6">
@@ -100,7 +91,7 @@ export default async function CustomersPage() {
                                                 {c.name}
                                             </Link>
                                         </TableCell>
-                                        <TableCell>{c.companyId ?? "-"}</TableCell>
+                                        <TableCell>{c.companyName ?? "-"}</TableCell>
                                         <TableCell>{c.email ?? "-"}</TableCell>
                                         <TableCell>{c.phone ?? "-"}</TableCell>
                                         <TableCell>
