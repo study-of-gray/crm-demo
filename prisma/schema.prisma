@@ -8,10 +8,10 @@ datasource db {
 }
 
 model Company {
-  id        String     @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
   users     User[] // 公司下的员工
-  createdAt DateTime   @default(now())
+  createdAt DateTime @default(now())
 }
 
 model User {
@@ -22,6 +22,7 @@ model User {
   password  String
   role      Role     @default(USER)
   companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
   createdAt DateTime @default(now())
 
   @@index([companyId])
