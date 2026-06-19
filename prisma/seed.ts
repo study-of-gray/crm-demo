@@ -21,7 +21,7 @@ async function main() {
             name: "管理员",
             email: "admin@example.com",
             phone: "13800000000",
-            password: "123456",
+            password: "$2b$10$4wrvAH895oIEaPq06YeZs.UvQWG0UDZanxbdkOjOF6MnF3kNEUO2m", // "123456" 的 bcrypt 哈希
             role: "ADMIN",
             companyId: company.id,
         },
@@ -32,7 +32,7 @@ async function main() {
             name: "员工 A",
             email: "staff@example.com",
             phone: "13800000001",
-            password: "123456",
+            password: "$2b$10$4wrvAH895oIEaPq06YeZs.UvQWG0UDZanxbdkOjOF6MnF3kNEUO2m",
             role: "STAFF",
             companyId: company.id,
         },
@@ -43,7 +43,7 @@ async function main() {
             name: "用户 A",
             email: "customer@example.com",
             phone: "13800000222",
-            password: "123456",
+            password: "$2b$10$4wrvAH895oIEaPq06YeZs.UvQWG0UDZanxbdkOjOF6MnF3kNEUO2m",
             role: "USER",
         },
     });
@@ -52,7 +52,7 @@ async function main() {
             name: "用户 B",
             email: "customer3@example.com",
             phone: "13800000333",
-            password: "123456",
+            password: "$2b$10$4wrvAH895oIEaPq06YeZs.UvQWG0UDZanxbdkOjOF6MnF3kNEUO2m",
             role: "USER",
         },
     });
@@ -61,7 +61,7 @@ async function main() {
             name: "用户 C",
             email: "customer4@example.com",
             phone: "13800000444",
-            password: "123456",
+            password: "$2b$10$4wrvAH895oIEaPq06YeZs.UvQWG0UDZanxbdkOjOF6MnF3kNEUO2m",
             role: "USER",
         },
     });

@@ -11,16 +11,16 @@ export const authOptions = {
                 password: {},
             },
             async authorize(credentials) {
-                if (!credentials?.email || !credentials?.password) return null;
+                if (!credentials?.email || !credentials?.password) {
+                    console.error("Email and password are required");
+                    return null;
+                }
+
                 const user = await login(credentials.email, credentials.password);
                 return user ?? null; // ✅ 永远不 throw
             },
         }),
     ],
-    pages: {
-        signIn: "/login",
-        error: "/login",
-    },
     callbacks: {
         async jwt({ token, user }) {
             if (user) {

@@ -1,6 +1,5 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -12,17 +11,18 @@ export default function LoginPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const res = await signIn("credentials", {
-            email,
-            password,
-            redirect: false,
+        const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
         });
 
-        if (res?.ok) {
-            router.push("/customers");
-        } else {
-            alert("登录失败");
+        if (!res.ok) {
+            alert("账号或密码错误");
+            return;
         }
+
+        router.push("/customers");
     };
 
     return (
