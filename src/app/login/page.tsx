@@ -18,15 +18,12 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            console.log("---------------------------------email, password, type`", email, password, type);
-
             const res = await signIn("credentials", {
                 email,
                 password,
                 type, // ✅ 关键：传递身份类型
                 redirect: false,
             });
-            console.log("---------------------------------登录响应：", res);
             if (!res?.ok || res?.error) {
                 alert(res?.error || "账号或密码错误");
                 setLoading(false);

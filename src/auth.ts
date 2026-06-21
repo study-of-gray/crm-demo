@@ -15,7 +15,6 @@ export const authOptions = {
                 type: {}, // ✅ 关键：接收身份类型
             },
             async authorize(credentials) {
-                console.log('---------------auth:credentials.email, credentials.password', credentials.email, credentials.password, credentials?.type);
                 if (!credentials?.email || !credentials?.password || !credentials?.type) {
                     throw new Error("Missing credentials");
                     // return null;
@@ -35,7 +34,6 @@ export const authOptions = {
                         credentials.password
                     );
                 }
-                console.log('---------------user', user);
                 if (!user) {
                     throw new Error("Invalid credentials");
                 }
