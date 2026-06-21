@@ -1,89 +1,197 @@
-/// <reference types="node" />
-
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
 async function main() {
-    // 清空旧数据
-    await prisma.customer.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.company.deleteMany();
+    const salt = await bcrypt.genSalt(10);
 
-    // 公司
-    const company = await prisma.company.create({
-        data: { name: "示例科技公司" },
+    // 1. 创建公司（不用 upsert）
+    let company1 = await prisma.company.findFirst({
+        where: { name: "北京分公司" },
     });
 
-    // 管理员
-    const admin = await prisma.user.create({
-        data: {
-            name: "管理员",
-            email: "admin@example.com",
-            phone: "13800000000",
-            password: "$2b$10$4wrvAH895oIEaPq06YeZs.UvQWG0UDZanxbdkOjOF6MnF3kNEUO2m", // "123456" 的 bcrypt 哈希
-            role: "ADMIN",
-            companyId: company.id,
-        },
-    });
-    // 员工
-    const staff = await prisma.user.create({
-        data: {
-            name: "员工 A",
-            email: "staff@example.com",
-            phone: "13800000001",
-            password: "$2b$10$4wrvAH895oIEaPq06YeZs.UvQWG0UDZanxbdkOjOF6MnF3kNEUO2m",
-            role: "STAFF",
-            companyId: company.id,
-        },
-    });
-    // 客户（来自 User）
-    const user1 = await prisma.user.create({
-        data: {
-            name: "用户 A",
-            email: "customer@example.com",
-            phone: "13800000222",
-            password: "$2b$10$4wrvAH895oIEaPq06YeZs.UvQWG0UDZanxbdkOjOF6MnF3kNEUO2m",
-            role: "USER",
-        },
-    });
-    const user2 = await prisma.user.create({
-        data: {
-            name: "用户 B",
-            email: "customer3@example.com",
-            phone: "13800000333",
-            password: "$2b$10$4wrvAH895oIEaPq06YeZs.UvQWG0UDZanxbdkOjOF6MnF3kNEUO2m",
-            role: "USER",
-        },
-    });
-    const user3 = await prisma.user.create({
-        data: {
-            name: "用户 C",
-            email: "customer4@example.com",
-            phone: "13800000444",
-            password: "$2b$10$4wrvAH895oIEaPq06YeZs.UvQWG0UDZanxbdkOjOF6MnF3kNEUO2m",
-            role: "USER",
-        },
+    if (!company1) {
+        company1 = await prisma.company.create({
+            data: { name: "北京分公司" },
+        });
+    }
+
+    let company2 = await prisma.company.findFirst({
+        where: { name: "上海分公司" },
     });
 
-    // 客户身份
-    await prisma.customer.createMany({
-        data: [
-            {
-                userId: user1.id,
-                companyId: company.id, // ✅ 可选
+    if (!company2) {
+        company2 = await prisma.company.create({
+            data: { name: "上海分公司" },
+        });
+    }
+
+    // 2. 创建员工
+    let admin = await prisma.user.findFirst({
+        where: { email: "admin@system.com" },
+    });
+
+    if (!admin) {
+        admin = await prisma.user.create({
+            data: {
+                name: "系统管理员",
+                email: "admin@system.com",
+                password: await bcrypt.hash("123456", salt),
+                role: "ADMIN",
             },
-            {
-                userId: user2.id,
-                companyId: company.id, // ✅ 可选
-            },
-            {
-                userId: user3.id,
-            }
-        ]
+        });
+    }
+
+    let manager = await prisma.user.findFirst({
+        where: { email: "manager@bj.com" },
     });
 
-    console.log("✅ User 与 Customer 对应关系已生成");
+    if (!manager) {
+        manager = await prisma.user.create({
+            data: {
+                name: "北京经理",
+                email: "manager@bj.com",
+                password: await bcrypt.hash("123456", salt),
+                role: "MANAGER",
+            },
+        });
+    }
+
+    let staff = await prisma.user.findFirst({
+        where: { email: "zhangsan@bj.com" },
+    });
+
+    if (!staff) {
+        staff = await prisma.user.create({
+            data: {
+                name: "销售员张三",
+                email: "zhangsan@bj.com",
+                password: await bcrypt.hash("123456", salt),
+                role: "STAFF",
+            },
+        });
+    }
+
+    // 3. 创建客户
+    let customer1 = await prisma.customer.findFirst({
+        where: { email: "alibaba@demo.com" },
+    });
+
+    if (!customer1) {
+        customer1 = await prisma.customer.create({
+            data: {
+                name: "阿里巴巴",
+                email: "alibaba@demo.com",
+                phone: "13800000001",
+                password: await bcrypt.hash("123456", salt),
+            },
+        });
+    }
+
+    let customer2 = await prisma.customer.findFirst({
+        where: { email: "tencent@demo.com" },
+    });
+
+    if (!customer2) {
+        customer2 = await prisma.customer.create({
+            data: {
+                name: "腾讯科技",
+                email: "tencent@demo.com",
+                phone: "13800000002",
+                password: await bcrypt.hash("123456", salt),
+            },
+        });
+    }
+
+    // 4. 关联公司与员工（用 upsert，因为复合唯一）
+    await prisma.companyUser.upsert({
+        where: {
+            companyId_userId: {
+                companyId: company1.id,
+                userId: admin.id,
+            },
+        },
+        update: {},
+        create: {
+            companyId: company1.id,
+            userId: admin.id,
+        },
+    });
+
+    // 5. 关联公司与客户
+    await prisma.companyCustomer.upsert({
+        where: {
+            companyId_customerId: {
+                companyId: company1.id,
+                customerId: customer1.id,
+            },
+        },
+        update: {},
+        create: {
+            companyId: company1.id,
+            customerId: customer1.id,
+        },
+    });
+
+    await prisma.companyCustomer.upsert({
+        where: {
+            companyId_customerId: {
+                companyId: company1.id,
+                customerId: customer2.id,
+            },
+        },
+        update: {},
+        create: {
+            companyId: company1.id,
+            customerId: customer2.id,
+        },
+    });
+
+    await prisma.companyCustomer.upsert({
+        where: {
+            companyId_customerId: {
+                companyId: company2.id,
+                customerId: customer1.id,
+            },
+        },
+        update: {},
+        create: {
+            companyId: company2.id,
+            customerId: customer1.id,
+        },
+    });
+
+    // 6. 分配客户给员工
+    await prisma.customerAssignment.upsert({
+        where: {
+            userId_customerId: {
+                userId: staff.id,
+                customerId: customer1.id,
+            },
+        },
+        update: {},
+        create: {
+            userId: staff.id,
+            customerId: customer1.id,
+        },
+    });
+
+    await prisma.customerAssignment.upsert({
+        where: {
+            userId_customerId: {
+                userId: staff.id,
+                customerId: customer2.id,
+            },
+        },
+        update: {},
+        create: {
+            userId: staff.id,
+            customerId: customer2.id,
+        },
+    });
+
+    console.log("✅ Seed 数据创建成功");
 }
 
 main()

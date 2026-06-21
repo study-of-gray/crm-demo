@@ -9,9 +9,11 @@ datasource db {
 
 model Company {
   id        String   @id @default(cuid())
-  name      String
-  users     User[] // 公司下的员工
+  name      String   @unique // ✅ 加唯一约束
   createdAt DateTime @default(now())
+
+  companyUsers     CompanyUser[]
+  companyCustomers CompanyCustomer[]
 }
 
 model User {
@@ -19,28 +21,70 @@ model User {
   name      String
   email     String   @unique
   phone     String?
-  password  String
-  role      Role     @default(USER)
-  companyId String?
-  company   Company? @relation(fields: [companyId], references: [id])
+  password  String // ✅ 员工登录密码
+  role      Role     @default(STAFF)
   createdAt DateTime @default(now())
 
-  @@index([companyId])
-  @@index([email])
+  companyUsers      CompanyUser[]
+  assignedCustomers CustomerAssignment[]
 }
 
 model Customer {
   id        String   @id @default(cuid())
-  userId    String   @unique
-  companyId String?
+  name      String
+  email     String   @unique
+  phone     String?
+  password  String // ✅ 客户登录密码（独立）
   createdAt DateTime @default(now())
 
-  @@index([userId])
+  companyCustomers CompanyCustomer[]
+  assignedStaff    CustomerAssignment[]
+}
+
+// ✅ 公司与员工的关系表
+model CompanyUser {
+  id        String   @id @default(cuid())
+  companyId String
+  userId    String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([companyId, userId])
   @@index([companyId])
+  @@index([userId])
+}
+
+// ✅ 公司与客户的关系表
+model CompanyCustomer {
+  id         String   @id @default(cuid())
+  companyId  String
+  customerId String
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([companyId, customerId])
+  @@index([companyId])
+  @@index([customerId])
+}
+
+// ✅ 员工与客户的关系表
+model CustomerAssignment {
+  id         String   @id @default(cuid())
+  userId     String
+  customerId String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, customerId])
+  @@index([userId])
+  @@index([customerId])
 }
 
 enum Role {
   ADMIN // 系统管理员
+  MANAGER // 二级管理员
   STAFF // 普通员工
-  USER // 客户账号
 }
