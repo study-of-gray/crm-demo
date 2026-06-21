@@ -15,6 +15,7 @@ export async function createCustomer(formData: FormData) {
             name: formData.get("name") as string,
             email: formData.get("email") as string,
             password: formData.get("password") as string,
+            // phone: formData.get("phone") as string,
             role: "USER",
         },
     });

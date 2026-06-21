@@ -19,8 +19,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createCustomer, getCustomers } from "@/actions/customer";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
 export default async function CustomersPage() {
+    const session = await auth();
+    if (!session) redirect("/login");
+
     const customers = await getCustomers();
 
     return (

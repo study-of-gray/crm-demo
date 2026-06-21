@@ -11,7 +11,7 @@ export default async function EditCustomerPage({ params }: Props) {
 
     const customer = await prisma.customer.findUnique({
         where: { id },
-        include: { company: true },
+        // include: { company: true },
     });
 
     if (!customer) notFound();
