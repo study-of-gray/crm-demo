@@ -30,12 +30,13 @@ model User {
 }
 
 model Customer {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  phone     String?
-  password  String // ✅ 客户登录密码（独立）
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  phone       String?
+  password    String // ✅ 客户登录密码（独立）
+  description String? // ✅ 新增字段
+  createdAt   DateTime @default(now())
 
   companyCustomers CompanyCustomer[]
   assignedStaff    CustomerAssignment[]
