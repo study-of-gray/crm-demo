@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Customer } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 export async function getCustomers(userId: string): Promise<Customer[]> {
     return prisma.customer.findMany({
@@ -17,17 +18,70 @@ export async function getCustomerById(id: string, userId: string): Promise<Custo
     });
 }
 
-// 创建客户
+// 创建客户（管理员/经理可以为员工创建客户，员工只能为自己创建客户）
 export async function createCustomer(
-    data: Omit<Customer, "id" | "createdAt" | "userId">,
-    userId: string
-): Promise<Customer> {
-    return prisma.customer.create({
-        data: {
-            ...data,
-            userId, // ✅ 绑定归属
-        },
-    });
+    data: {
+        name: string;
+        email: string;
+        phone?: string;
+        description?: string;
+        companyId?: string;
+        assignedToId?: string;
+    },
+    userId: string,
+    role: string
+) {
+    try {
+        // 检查邮箱是否已存在
+        const existingCustomer = await prisma.customer.findUnique({
+            where: { email: data.email },
+        });
+
+        if (existingCustomer) {
+            throw new Error("邮箱已存在");
+        }
+
+        // 生成随机密码（客户可以登录）/但是这里使用默认密码123456，客户登录后可以修改密码
+        const hashedPassword = await bcrypt.hash("123456", 10);
+        // 确定负责人：如果没有指定，则分配给当前员工
+        const assignedToId = data.assignedToId || userId;
+        // 创建客户
+        const customer = await prisma.customer.create({
+            data: {
+                name: data.name,
+                email: data.email,
+                phone: data.phone,
+                description: data.description,
+                password: hashedPassword,
+            },
+        });
+
+        // 关联公司
+        if (data.companyId) {
+            await prisma.companyCustomer.create({
+                data: {
+                    companyId: data.companyId,
+                    customerId: customer.id,
+                },
+            });
+        }
+
+        // 分配负责人
+        await prisma.customerAssignment.create({
+            data: {
+                customerId: customer.id,
+                userId: assignedToId,
+            },
+        });
+
+        // TODO: 发送邮件给客户，告知其登录密码
+        // console.log(`客户 ${customer.name} 创建成功，初始密码：123456`);
+
+        return customer;
+    } catch (error: any) {
+        console.error("创建客户失败:", error);
+        throw error;
+    }
 }
 
 // -------------------------------------------------
@@ -78,10 +132,9 @@ export async function getCustomerByIdForEmployee(
     role: string
 ) {
     try {
-        console.log("获取客户详情", customerId, userId, role);
         // 管理员/经理可以查看所有客户
         if (role === "ADMIN" || role === "MANAGER") {
-            let res12 = await prisma.customer.findUnique({
+            return await prisma.customer.findUnique({
                 where: { id: customerId },
                 include: {
                     assignedStaff: {
@@ -96,9 +149,6 @@ export async function getCustomerByIdForEmployee(
                     },
                 },
             });
-            console.log("res12------------", res12);
-
-            return res12;
         }
 
         // 员工只能查看自己负责的客户
