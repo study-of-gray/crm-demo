@@ -68,6 +68,10 @@ export default async function EditEmployeePage({
 
             redirect("/dashboard/employees");
         } catch (error: any) {
+            if (error.digest && error.digest.startsWith("NEXT_REDIRECT")) {
+                throw error;
+            }
+
             console.error("更新员工失败:", error);
             throw new Error(error.message || "更新员工失败");
         }
