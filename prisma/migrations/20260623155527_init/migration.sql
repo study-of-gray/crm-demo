@@ -51,6 +51,23 @@ CREATE TABLE "Message" (
 );
 
 -- CreateTable
+CREATE TABLE "Document" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "fileName" TEXT NOT NULL,
+    "filePath" TEXT NOT NULL,
+    "fileSize" INTEGER NOT NULL,
+    "mimeType" TEXT NOT NULL,
+    "description" TEXT,
+    "uploadedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "customerId" TEXT NOT NULL,
+    "uploadedById" TEXT NOT NULL,
+
+    CONSTRAINT "Document_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "CompanyUser" (
     "id" TEXT NOT NULL,
     "companyId" TEXT NOT NULL,
@@ -99,6 +116,12 @@ CREATE INDEX "Message_senderId_idx" ON "Message"("senderId");
 CREATE INDEX "Message_isRead_idx" ON "Message"("isRead");
 
 -- CreateIndex
+CREATE INDEX "Document_customerId_idx" ON "Document"("customerId");
+
+-- CreateIndex
+CREATE INDEX "Document_uploadedById_idx" ON "Document"("uploadedById");
+
+-- CreateIndex
 CREATE INDEX "CompanyUser_companyId_idx" ON "CompanyUser"("companyId");
 
 -- CreateIndex
@@ -130,6 +153,12 @@ ALTER TABLE "Message" ADD CONSTRAINT "Message_senderId_fkey" FOREIGN KEY ("sende
 
 -- AddForeignKey
 ALTER TABLE "Message" ADD CONSTRAINT "Message_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Document" ADD CONSTRAINT "Document_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Document" ADD CONSTRAINT "Document_uploadedById_fkey" FOREIGN KEY ("uploadedById") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "CompanyUser" ADD CONSTRAINT "CompanyUser_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;

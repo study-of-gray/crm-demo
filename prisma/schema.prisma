@@ -28,7 +28,8 @@ model User {
   companyUsers      CompanyUser[]
   assignedCustomers CustomerAssignment[]
 
-  sentMessages Message[] @relation("UserSentMessages")
+  sentMessages      Message[]  @relation("UserSentMessages")
+  uploadedDocuments Document[] @relation("UploadedDocuments") // ✅ 新增
 }
 
 model Customer {
@@ -43,7 +44,8 @@ model Customer {
   companyCustomers CompanyCustomer[]
   assignedStaff    CustomerAssignment[]
 
-  receivedMessages Message[] @relation("CustomerReceivedMessages")
+  receivedMessages Message[]  @relation("CustomerReceivedMessages")
+  documents        Document[] @relation("CustomerDocuments") // ✅ 新增
 }
 
 model Message {
@@ -54,17 +56,36 @@ model Message {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // ✅ 发送者（只能是员工）
   senderId String
   sender   User   @relation("UserSentMessages", fields: [senderId], references: [id], onDelete: Cascade)
 
-  // ✅ 接收者（只能是客户）
   receiverId String
   receiver   Customer @relation("CustomerReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
 
   @@index([receiverId])
   @@index([senderId])
   @@index([isRead])
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  name        String
+  fileName    String
+  filePath    String
+  fileSize    Int
+  mimeType    String
+  description String?
+  uploadedAt  DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customerId String
+  customer   Customer @relation("CustomerDocuments", fields: [customerId], references: [id], onDelete: Cascade) // ✅ 修正
+
+  uploadedById String
+  uploadedBy   User   @relation("UploadedDocuments", fields: [uploadedById], references: [id], onDelete: Cascade) // ✅ 修正
+
+  @@index([customerId])
+  @@index([uploadedById])
 }
 
 model CompanyUser {
