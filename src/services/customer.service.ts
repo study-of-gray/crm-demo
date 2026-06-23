@@ -322,3 +322,44 @@ export async function changeCustomerPassword(
         };
     }
 }
+// 获取员工负责的客户
+export async function getAssignedCustomers(
+    userId: string,
+    role: string
+) {
+    try {
+        if (role === "ADMIN" || role === "MANAGER") {
+            // 管理员/经理可以看到所有客户
+            return prisma.customer.findMany({
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                },
+                orderBy: {
+                    name: "asc",
+                },
+            });
+        } else {
+            // 员工只能看到自己负责的客户
+            return prisma.customer.findMany({
+                where: {
+                    assignedStaff: {
+                        some: { userId },
+                    },
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                },
+                orderBy: {
+                    name: "asc",
+                },
+            });
+        }
+    } catch (error) {
+        console.error("获取客户列表失败:", error);
+        return [];
+    }
+}

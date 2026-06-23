@@ -101,10 +101,10 @@ export default async function DashboardPage() {
                                         icon="👤"
                                     />
                                     <QuickActionCard
-                                        title="公司设置"
-                                        description="配置公司信息"
-                                        href="/dashboard/settings"
-                                        icon="⚙️"
+                                        title="消息管理"
+                                        description="与客户沟通消息"
+                                        href="/dashboard/messages"
+                                        icon="💬"
                                     />
                                 </>
                             )}
@@ -114,8 +114,14 @@ export default async function DashboardPage() {
                                 <QuickActionCard
                                     title="我的客户"
                                     description="查看负责的客户"
-                                    href="/dashboard/my-customers"
+                                    href="/dashboard/customers"
                                     icon="👥"
+                                />
+                                <QuickActionCard
+                                    title="消息管理"
+                                    description="与客户沟通消息"
+                                    href="/dashboard/messages"
+                                    icon="💬"
                                 />
                                 <QuickActionCard
                                     title="新增客户"
@@ -123,18 +129,10 @@ export default async function DashboardPage() {
                                     href="/dashboard/customers/new"
                                     icon="➕"
                                 />
-                                <QuickActionCard
-                                    title="跟进记录"
-                                    description="查看跟进历史"
-                                    href="/dashboard/follow-ups"
-                                    icon="📝"
-                                />
                             </>
                         )}
                     </div>
                 </div>
-
-                {/* 最近客户（仅 STAFF 显示） */}
                 {session.user.role === "STAFF" && (
                     <div className="mt-10">
                         <h3 className="text-lg font-medium text-gray-900 mb-4">
