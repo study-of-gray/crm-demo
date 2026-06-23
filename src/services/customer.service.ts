@@ -85,7 +85,7 @@ export async function createCustomer(
 }
 
 // -------------------------------------------------
-// ✅ 根据角色获取客户
+// 根据角色获取客户
 export async function getCustomersForEmployee(
     userId: string,
     role: string
@@ -125,7 +125,7 @@ export async function getCustomersForEmployee(
         });
     }
 }
-// ✅ 根据 ID 获取客户详情（带权限检查）
+// 根据 ID 获取客户详情（带权限检查）
 export async function getCustomerByIdForEmployee(
     customerId: string,
     userId: string,
@@ -179,7 +179,7 @@ export async function getCustomerByIdForEmployee(
         return null;
     }
 }
-// ✅ 删除客户（带权限检查）
+// 删除客户（带权限检查）
 export async function deleteCustomer(
     customerId: string,
     userId: string,
@@ -200,7 +200,7 @@ export async function deleteCustomer(
     }
 }
 
-// ✅ 更新客户信息
+// 更新客户信息
 export async function updateCustomer(
     customerId: string,
     data: {
@@ -235,4 +235,90 @@ export async function updateCustomer(
             description: data.description,
         },
     });
+}
+// 获取客户个人资料
+export async function getCustomerProfile(email: string) {
+    return prisma.customer.findUnique({
+        where: { email },
+        include: {
+            assignedStaff: {
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            phone: true,
+                            role: true,
+                        },
+                    },
+                },
+            },
+            companyCustomers: {
+                include: {
+                    company: {
+                        select: {
+                            id: true,
+                            name: true,
+                        },
+                    },
+                },
+            },
+        },
+    });
+}
+// 修改客户密码
+export async function changeCustomerPassword(
+    email: string,
+    currentPassword: string,
+    newPassword: string
+): Promise<{
+    success: boolean;
+    message?: string;
+}> {
+    try {
+        const customer = await prisma.customer.findUnique({
+            where: { email },
+        });
+
+        if (!customer) {
+            return {
+                success: false,
+                message: "客户不存在",
+            };
+        }
+
+        const isValid = await bcrypt.compare(currentPassword, customer.password);
+        if (!isValid) {
+            return {
+                success: false,
+                message: "当前密码错误",
+            };
+        }
+
+        if (newPassword.length < 6) {
+            return {
+                success: false,
+                message: "新密码至少需要 6 个字符",
+            };
+        }
+
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+        await prisma.customer.update({
+            where: { email },
+            data: { password: hashedNewPassword },
+        });
+
+        return {
+            success: true,
+            message: "密码修改成功",
+        };
+    } catch (error) {
+        console.error("修改密码失败:", error);
+        return {
+            success: false,
+            message: "系统错误，请稍后再试",
+        };
+    }
 }

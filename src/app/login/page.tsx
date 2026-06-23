@@ -1,8 +1,8 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { signIn } from "next-auth/react";
 
 type LoginType = "employee" | "customer";
 
@@ -10,54 +10,45 @@ export default function LoginPage() {
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [type, setType] = useState<LoginType>("employee"); // ✅ 默认员工
+    const [type, setType] = useState<LoginType>("employee");
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setError("");
 
-        try {
-            const res = await signIn("credentials", {
-                email,
-                password,
-                type, // ✅ 关键：传递身份类型
-                redirect: false,
-            });
-            if (!res?.ok || res?.error) {
-                alert(res?.error || "账号或密码错误");
-                setLoading(false);
+        const res = await signIn("credentials", {
+            email,
+            password,
+            type,
+            redirect: false,
+        });
 
-                return null;
-            }
-
-            // ✅ 根据身份跳转到不同页面
-            if (type === "employee") {
-                router.push("/dashboard"); // 员工后台
-            } else {
-                router.push("/portal"); // 客户门户
-            }
-        } catch (error) {
-            alert("登录失败，请稍后重试");
-        } finally {
+        if (!res?.ok) {
+            setError("账号或密码错误");
             setLoading(false);
+            return;
+        }
+
+        // ✅ 根据身份跳转
+        if (type === "employee") {
+            router.push("/dashboard");
+        } else {
+            router.push("/portal");
         }
     };
 
     return (
         <main className="flex min-h-screen items-center justify-center bg-gray-50">
-            <form
-                onSubmit={handleSubmit}
-                className="w-full max-w-sm space-y-6 rounded-lg bg-white p-8 shadow-md"
-            >
+            <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6 rounded-lg bg-white p-8 shadow-md">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold text-gray-900">登录系统</h1>
                     <p className="mt-1 text-sm text-gray-500">
                         请选择您的身份并登录
                     </p>
                 </div>
-
-                {/* ✅ 身份选择 */}
                 <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
                         登录身份
@@ -71,8 +62,6 @@ export default function LoginPage() {
                         <option value="customer">客户</option>
                     </select>
                 </div>
-
-                {/* ✅ 邮箱 */}
                 <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
                         邮箱地址
@@ -86,8 +75,6 @@ export default function LoginPage() {
                         className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                 </div>
-
-                {/* ✅ 密码 */}
                 <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
                         密码
@@ -101,8 +88,11 @@ export default function LoginPage() {
                         className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                 </div>
-
-                {/* ✅ 提交按钮 */}
+                {error && (
+                    <div className="rounded-md bg-red-50 p-3">
+                        <p className="text-sm text-red-800">{error}</p>
+                    </div>
+                )}
                 <button
                     type="submit"
                     disabled={loading}
@@ -110,8 +100,6 @@ export default function LoginPage() {
                 >
                     {loading ? "登录中..." : "登录"}
                 </button>
-
-                {/* ✅ 提示文字 */}
                 <p className="text-center text-xs text-gray-500">
                     {type === "employee"
                         ? "员工请联系管理员获取账号"
