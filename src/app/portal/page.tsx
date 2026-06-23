@@ -86,7 +86,6 @@ export default async function PortalPage() {
                                 </div>
                             </dl>
                         </div>
-
                         {/* 我的负责人 */}
                         <div className="rounded-lg border border-gray-200 bg-white p-6">
                             <h2 className="mb-6 text-lg font-medium text-gray-900">
@@ -173,7 +172,6 @@ export default async function PortalPage() {
                             )}
                         </div>
                     </div>
-
                     {/* 右侧：快捷操作 */}
                     <div className="space-y-8">
                         {/* 账户安全 */}
@@ -213,8 +211,6 @@ export default async function PortalPage() {
                                 </div>
                             </div>
                         </div>
-
-                        {/* 快捷操作 */}
                         <div className="rounded-lg border border-gray-200 bg-white p-6">
                             <h2 className="mb-4 text-lg font-medium text-gray-900">
                                 快捷操作
@@ -278,8 +274,6 @@ export default async function PortalPage() {
                                 </Link>
                             </div>
                         </div>
-
-                        {/* 帮助中心 */}
                         <div className="rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
                             <h2 className="mb-2 text-lg font-medium text-gray-900">
                                 需要帮助？
