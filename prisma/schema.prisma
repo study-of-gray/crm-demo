@@ -9,7 +9,7 @@ datasource db {
 
 model Company {
   id        String   @id @default(cuid())
-  name      String   @unique // ✅ 加唯一约束
+  name      String   @unique
   createdAt DateTime @default(now())
 
   companyUsers     CompanyUser[]
@@ -21,12 +21,14 @@ model User {
   name      String
   email     String   @unique
   phone     String?
-  password  String // ✅ 员工登录密码
+  password  String
   role      Role     @default(STAFF)
   createdAt DateTime @default(now())
 
   companyUsers      CompanyUser[]
   assignedCustomers CustomerAssignment[]
+
+  sentMessages Message[] @relation("UserSentMessages")
 }
 
 model Customer {
@@ -34,15 +36,37 @@ model Customer {
   name        String
   email       String   @unique
   phone       String?
-  password    String // ✅ 客户登录密码（独立）
-  description String? // ✅ 新增字段
+  password    String
+  description String?
   createdAt   DateTime @default(now())
 
   companyCustomers CompanyCustomer[]
   assignedStaff    CustomerAssignment[]
+
+  receivedMessages Message[] @relation("CustomerReceivedMessages")
 }
 
-// ✅ 公司与员工的关系表
+model Message {
+  id        String   @id @default(cuid())
+  subject   String
+  content   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ✅ 发送者（只能是员工）
+  senderId String
+  sender   User   @relation("UserSentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  // ✅ 接收者（只能是客户）
+  receiverId String
+  receiver   Customer @relation("CustomerReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([receiverId])
+  @@index([senderId])
+  @@index([isRead])
+}
+
 model CompanyUser {
   id        String   @id @default(cuid())
   companyId String
@@ -56,7 +80,6 @@ model CompanyUser {
   @@index([userId])
 }
 
-// ✅ 公司与客户的关系表
 model CompanyCustomer {
   id         String   @id @default(cuid())
   companyId  String
@@ -70,7 +93,6 @@ model CompanyCustomer {
   @@index([customerId])
 }
 
-// ✅ 员工与客户的关系表
 model CustomerAssignment {
   id         String   @id @default(cuid())
   userId     String
@@ -85,7 +107,7 @@ model CustomerAssignment {
 }
 
 enum Role {
-  ADMIN // 系统管理员
-  MANAGER // 二级管理员
-  STAFF // 普通员工
+  ADMIN
+  MANAGER
+  STAFF
 }
