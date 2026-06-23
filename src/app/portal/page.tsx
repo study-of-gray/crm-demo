@@ -2,18 +2,18 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCustomerProfile } from "@/services/customer.service";
+import { getUnreadMessageCount } from "@/actions/messages"; // ✅ 导入
 import { formatDate } from "@/lib/utils";
 
 export default async function PortalPage() {
     const session = await auth();
 
-    // ✅ 检查是否是客户
     if (!session || session.user.type !== "customer") {
         redirect("/login");
     }
 
-    // ✅ 获取客户详细信息
     const customer = await getCustomerProfile(session.user.email!);
+    const unreadCount = await getUnreadMessageCount(); // ✅ 获取未读数量
 
     if (!customer) {
         redirect("/login");
@@ -86,6 +86,7 @@ export default async function PortalPage() {
                                 </div>
                             </dl>
                         </div>
+
                         {/* 我的负责人 */}
                         <div className="rounded-lg border border-gray-200 bg-white p-6">
                             <h2 className="mb-6 text-lg font-medium text-gray-900">
@@ -172,6 +173,7 @@ export default async function PortalPage() {
                             )}
                         </div>
                     </div>
+
                     {/* 右侧：快捷操作 */}
                     <div className="space-y-8">
                         {/* 账户安全 */}
@@ -211,6 +213,8 @@ export default async function PortalPage() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* 快捷操作 */}
                         <div className="rounded-lg border border-gray-200 bg-white p-6">
                             <h2 className="mb-4 text-lg font-medium text-gray-900">
                                 快捷操作
@@ -232,7 +236,7 @@ export default async function PortalPage() {
                                 </Link>
                                 <Link
                                     href="/portal/messages"
-                                    className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                                    className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors relative"
                                 >
                                     <span className="text-xl">💬</span>
                                     <div>
@@ -243,6 +247,12 @@ export default async function PortalPage() {
                                             查看销售代表留言
                                         </p>
                                     </div>
+                                    {/* ✅ 未读消息徽章 */}
+                                    {unreadCount > 0 && (
+                                        <span className="absolute top-2 right-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+                                            {unreadCount}
+                                        </span>
+                                    )}
                                 </Link>
                                 <Link
                                     href="/portal/documents"
@@ -274,6 +284,8 @@ export default async function PortalPage() {
                                 </Link>
                             </div>
                         </div>
+
+                        {/* 帮助中心 */}
                         <div className="rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
                             <h2 className="mb-2 text-lg font-medium text-gray-900">
                                 需要帮助？
