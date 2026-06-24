@@ -28,8 +28,10 @@ model User {
   companyUsers      CompanyUser[]
   assignedCustomers CustomerAssignment[]
 
-  sentMessages      Message[]  @relation("UserSentMessages")
-  uploadedDocuments Document[] @relation("UploadedDocuments") // ✅ 新增
+  sentMessages      Message[]     @relation("UserSentMessages")
+  uploadedDocuments Document[]    @relation("UploadedDocuments")
+  assignedTickets   Ticket[]      @relation("AssignedTickets")
+  ticketReplies     TicketReply[] @relation("UserTicketReplies")
 }
 
 model Customer {
@@ -44,8 +46,10 @@ model Customer {
   companyCustomers CompanyCustomer[]
   assignedStaff    CustomerAssignment[]
 
-  receivedMessages Message[]  @relation("CustomerReceivedMessages")
-  documents        Document[] @relation("CustomerDocuments") // ✅ 新增
+  receivedMessages Message[]     @relation("CustomerReceivedMessages")
+  documents        Document[]    @relation("CustomerDocuments")
+  tickets          Ticket[]      @relation("CustomerTickets")
+  ticketReplies    TicketReply[] @relation("CustomerTicketReplies")
 }
 
 model Message {
@@ -79,10 +83,10 @@ model Document {
   updatedAt   DateTime @updatedAt
 
   customerId String
-  customer   Customer @relation("CustomerDocuments", fields: [customerId], references: [id], onDelete: Cascade) // ✅ 修正
+  customer   Customer @relation("CustomerDocuments", fields: [customerId], references: [id], onDelete: Cascade)
 
   uploadedById String
-  uploadedBy   User   @relation("UploadedDocuments", fields: [uploadedById], references: [id], onDelete: Cascade) // ✅ 修正
+  uploadedBy   User   @relation("UploadedDocuments", fields: [uploadedById], references: [id], onDelete: Cascade)
 
   @@index([customerId])
   @@index([uploadedById])
@@ -125,6 +129,68 @@ model CustomerAssignment {
   @@unique([userId, customerId])
   @@index([userId])
   @@index([customerId])
+}
+
+model Ticket {
+  id          String         @id @default(cuid())
+  title       String
+  description String
+  status      TicketStatus   @default(OPEN)
+  priority    TicketPriority @default(MEDIUM)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // 提交工单的客户
+  customerId String
+  customer   Customer @relation("CustomerTickets", fields: [customerId], references: [id], onDelete: Cascade)
+
+  // 处理工单的员工
+  assignedToId String?
+  assignedTo   User?   @relation("AssignedTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  // 工单回复
+  replies TicketReply[]
+
+  @@index([customerId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([priority])
+}
+
+model TicketReply {
+  id         String   @id @default(cuid())
+  content    String
+  isInternal Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  // 回复作者可以是员工或客户
+  authorUserId String?
+  authorUser   User?   @relation("UserTicketReplies", fields: [authorUserId], references: [id], onDelete: Cascade)
+
+  authorCustomerId String?
+  authorCustomer   Customer? @relation("CustomerTicketReplies", fields: [authorCustomerId], references: [id], onDelete: Cascade)
+
+  // 所属工单
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([authorUserId])
+  @@index([authorCustomerId])
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }
 
 enum Role {
