@@ -47,13 +47,12 @@ export const authOptions = {
         signIn: "/login",
         error: "/login",
     },
-
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
                 token.role = user.role;
-                token.type = user.type; // ✅ 存储身份类型
+                token.type = user.type;
             }
             return token;
         },
@@ -64,6 +63,20 @@ export const authOptions = {
                 session.user.type = token.type as string;
             }
             return session;
+        },
+        async authorized({ request, auth }) {
+            const { pathname } = request.nextUrl;
+            const userType = auth?.user?.type;
+            // 员工后台
+            if (pathname.startsWith("/dashboard")) {
+                return userType === "employee";
+            }
+            // 客户门户
+            if (pathname.startsWith("/portal")) {
+                return userType === "customer";
+            }
+
+            return true;
         },
     },
 };
