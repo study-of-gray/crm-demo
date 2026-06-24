@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getAssignedCustomers } from "@/services/customer.service";
-import { uploadDocument } from "@/app/actions/documents";
+import { uploadDocument } from "@/actions/documents";
 
 export default async function UploadDocumentPage() {
     const session = await auth();

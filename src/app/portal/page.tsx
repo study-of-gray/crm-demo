@@ -269,16 +269,16 @@ export default async function PortalPage() {
                                     </div>
                                 </Link>
                                 <Link
-                                    href="/portal/support"
+                                    href="/portal/tickets"
                                     className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
                                 >
                                     <span className="text-xl">🎫</span>
                                     <div>
                                         <p className="text-sm font-medium text-gray-900">
-                                            提交工单
+                                            我的工单
                                         </p>
                                         <p className="text-xs text-gray-500">
-                                            遇到问题？提交工单
+                                            提交和查看工单
                                         </p>
                                     </div>
                                 </Link>

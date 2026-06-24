@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getAllDocuments } from "@/app/actions/documents";
+import { getAllDocuments } from "@/actions/documents";
 import { formatDate } from "@/lib/utils";
 
 export default async function EmployeeDocumentsPage() {
