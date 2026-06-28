@@ -15,8 +15,9 @@ export default async function EmployeeTicketsPage({
         redirect("/login");
     }
 
-    const statusFilter = searchParams.status as any;
-    const priorityFilter = searchParams.priority as any;
+    const resolvedSearchParams = await searchParams;
+    const statusFilter = resolvedSearchParams.status;
+    const priorityFilter = resolvedSearchParams.priority;;
 
     const tickets = await getAllTickets(
         statusFilter,

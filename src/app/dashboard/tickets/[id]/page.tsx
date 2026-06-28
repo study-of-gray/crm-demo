@@ -15,8 +15,8 @@ export default async function TicketDetailPage({
         redirect("/login");
     }
 
-    const ticket = await getTicketById(params.id);
-
+    const resolvedParams = await params;
+    const ticket = await getTicketById(resolvedParams.id);
     if (!ticket) {
         redirect("/dashboard/tickets");
     }
@@ -74,18 +74,18 @@ export default async function TicketDetailPage({
                                     <h2 className="text-xl font-bold text-gray-900">{ticket.title}</h2>
                                     <div className="mt-2 flex items-center gap-4">
                                         <span className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${ticket.status === "OPEN" ? "bg-blue-100 text-blue-800" :
-                                                ticket.status === "IN_PROGRESS" ? "bg-yellow-100 text-yellow-800" :
-                                                    ticket.status === "RESOLVED" ? "bg-green-100 text-green-800" :
-                                                        "bg-gray-100 text-gray-800"
+                                            ticket.status === "IN_PROGRESS" ? "bg-yellow-100 text-yellow-800" :
+                                                ticket.status === "RESOLVED" ? "bg-green-100 text-green-800" :
+                                                    "bg-gray-100 text-gray-800"
                                             }`}>
                                             {ticket.status === "OPEN" ? "待处理" :
                                                 ticket.status === "IN_PROGRESS" ? "处理中" :
                                                     ticket.status === "RESOLVED" ? "已解决" : "已关闭"}
                                         </span>
                                         <span className={`inline-flex rounded-full px-2 text-xs font-semibold ${ticket.priority === "LOW" ? "bg-gray-100 text-gray-800" :
-                                                ticket.priority === "MEDIUM" ? "bg-blue-100 text-blue-800" :
-                                                    ticket.priority === "HIGH" ? "bg-orange-100 text-orange-800" :
-                                                        "bg-red-100 text-red-800"
+                                            ticket.priority === "MEDIUM" ? "bg-blue-100 text-blue-800" :
+                                                ticket.priority === "HIGH" ? "bg-orange-100 text-orange-800" :
+                                                    "bg-red-100 text-red-800"
                                             }`}>
                                             {ticket.priority === "LOW" ? "低" :
                                                 ticket.priority === "MEDIUM" ? "中" :
@@ -357,9 +357,9 @@ export default async function TicketDetailPage({
                                     <dt className="text-sm font-medium text-gray-500">状态</dt>
                                     <dd className="mt-1">
                                         <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${ticket.status === "OPEN" ? "bg-blue-100 text-blue-800" :
-                                                ticket.status === "IN_PROGRESS" ? "bg-yellow-100 text-yellow-800" :
-                                                    ticket.status === "RESOLVED" ? "bg-green-100 text-green-800" :
-                                                        "bg-gray-100 text-gray-800"
+                                            ticket.status === "IN_PROGRESS" ? "bg-yellow-100 text-yellow-800" :
+                                                ticket.status === "RESOLVED" ? "bg-green-100 text-green-800" :
+                                                    "bg-gray-100 text-gray-800"
                                             }`}>
                                             {ticket.status === "OPEN" ? "待处理" :
                                                 ticket.status === "IN_PROGRESS" ? "处理中" :
@@ -371,9 +371,9 @@ export default async function TicketDetailPage({
                                     <dt className="text-sm font-medium text-gray-500">优先级</dt>
                                     <dd className="mt-1">
                                         <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${ticket.priority === "LOW" ? "bg-gray-100 text-gray-800" :
-                                                ticket.priority === "MEDIUM" ? "bg-blue-100 text-blue-800" :
-                                                    ticket.priority === "HIGH" ? "bg-orange-100 text-orange-800" :
-                                                        "bg-red-100 text-red-800"
+                                            ticket.priority === "MEDIUM" ? "bg-blue-100 text-blue-800" :
+                                                ticket.priority === "HIGH" ? "bg-orange-100 text-orange-800" :
+                                                    "bg-red-100 text-red-800"
                                             }`}>
                                             {ticket.priority === "LOW" ? "低" :
                                                 ticket.priority === "MEDIUM" ? "中" :
