@@ -1,267 +1,117 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { getEmployeeStats } from "@/services/dashboard.service";
+import DashboardLayout from "@/components/ui/layouts/DashboardLayout";
+import PageContainer from "@/components/ui/PageContainer";
+import StatCard from "@/components/ui/StatCard";
+import { getDashboardStats } from "@/actions/dashboard";
+import {
+    Users,
+    MessageSquare,
+    FileText,
+    Ticket,
+    TrendingUp,
+    Activity
+} from "lucide-react";
 
 export default async function DashboardPage() {
-    const session = await auth();
-
-    // ✅ 权限校验
-    if (!session || session.user.type !== "employee") {
-        redirect("/login");
-    }
-
-    // ✅ 获取统计数据
-    const stats = await getEmployeeStats(
-        session.user.id,
-        session.user.role
-    );
+    const stats = await getDashboardStats();
 
     return (
-        <main className="min-h-screen bg-gray-50">
-            {/* 顶部导航 */}
-            <header className="bg-white shadow">
-                <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between">
-                        <h1 className="text-2xl font-bold text-gray-900">
-                            员工后台
-                        </h1>
-                        <div className="flex items-center gap-4">
-                            <span className="text-sm text-gray-600">
-                                {session.user.name} ({session.user.role})
-                            </span>
-                            <Link
-                                href="/api/auth/signout"
-                                className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-500"
-                            >
-                                退出登录
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            {/* 主要内容 */}
-            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-                {/* 欢迎语 */}
-                <div className="mb-8">
-                    <h2 className="text-xl font-semibold text-gray-900">
-                        欢迎回来，{session.user.name}！
-                    </h2>
-                    <p className="mt-1 text-sm text-gray-600">
-                        {session.user.role === "ADMIN" && "您拥有系统最高权限"}
-                        {session.user.role === "MANAGER" && "您可以管理部门客户"}
-                        {session.user.role === "STAFF" && "您正在跟进客户"}
-                    </p>
-                </div>
-
+        <DashboardLayout>
+            <PageContainer
+                title="仪表盘"
+                description="欢迎回来，这里是您的CRM工作台概览"
+            >
                 {/* 统计卡片 */}
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     <StatCard
                         title="总客户数"
                         value={stats.totalCustomers}
+                        icon={Users}
                         color="blue"
+                        trend={{ value: 12, isPositive: true }}
                     />
                     <StatCard
-                        title="我的客户"
-                        value={stats.myCustomers}
+                        title="未读消息"
+                        value={stats.unreadMessages}
+                        icon={MessageSquare}
+                        color="yellow"
+                        trend={{ value: 5, isPositive: false }}
+                    />
+                    <StatCard
+                        title="文档总数"
+                        value={stats.totalDocuments}
+                        icon={FileText}
                         color="green"
+                        trend={{ value: 8, isPositive: true }}
                     />
                     <StatCard
-                        title="本月新增"
-                        value={stats.newThisMonth}
-                        color="purple"
-                    />
-                    <StatCard
-                        title="待跟进"
-                        value={stats.pendingFollowUp}
-                        color="orange"
+                        title="待处理工单"
+                        value={stats.openTickets}
+                        icon={Ticket}
+                        color="red"
+                        trend={{ value: 3, isPositive: false }}
                     />
                 </div>
 
-                {/* 快捷操作 */}
-                <div className="mt-10">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">
-                        快捷操作
-                    </h3>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                        {(session.user.role === "ADMIN" ||
-                            session.user.role === "MANAGER") && (
-                                <>
-                                    <QuickActionCard
-                                        title="客户管理"
-                                        description="查看和管理所有客户"
-                                        href="/dashboard/customers"
-                                        icon="👥"
-                                    />
-                                    <QuickActionCard
-                                        title="员工管理"
-                                        description="管理系统员工"
-                                        href="/dashboard/employees"
-                                        icon="👤"
-                                    />
-                                    <QuickActionCard
-                                        title="消息管理"
-                                        description="与客户沟通消息"
-                                        href="/dashboard/messages"
-                                        icon="💬"
-                                    />
-                                    <QuickActionCard
-                                        title="工单管理"
-                                        description="处理客户提交的工单"
-                                        href="/dashboard/tickets"
-                                        icon="🎫"
-                                    />
-                                </>
-                            )}
+                {/* 最近活动 */}
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    {/* 最近工单 */}
+                    <div className="rounded-xl bg-white shadow-sm border border-gray-200">
+                        <div className="p-6 border-b border-gray-200">
+                            <h2 className="text-lg font-semibold text-gray-900">最近工单</h2>
+                        </div>
+                        <div className="divide-y divide-gray-200">
+                            {stats.recentTickets.map((ticket) => (
+                                <div key={ticket.id} className="p-4 hover:bg-gray-50 transition-colors">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-900">{ticket.title}</p>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                客户: {ticket.customer.name} • {new Date(ticket.createdAt).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${ticket.status === "OPEN" ? "bg-blue-100 text-blue-800" :
+                                            ticket.status === "IN_PROGRESS" ? "bg-yellow-100 text-yellow-800" :
+                                                "bg-green-100 text-green-800"
+                                            }`}>
+                                            {ticket.status === "OPEN" ? "待处理" :
+                                                ticket.status === "IN_PROGRESS" ? "处理中" : "已解决"}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
 
-                        {session.user.role === "STAFF" && (
-                            <>
-                                <QuickActionCard
-                                    title="我的客户"
-                                    description="查看负责的客户"
-                                    href="/dashboard/customers"
-                                    icon="👥"
-                                />
-                                <QuickActionCard
-                                    title="消息管理"
-                                    description="与客户沟通消息"
-                                    href="/dashboard/messages"
-                                    icon="💬"
-                                />
-                                <QuickActionCard
-                                    title="新增客户"
-                                    description="录入新客户"
-                                    href="/dashboard/customers/new"
-                                    icon="➕"
-                                />
-                                <QuickActionCard
-                                    title="我的工单"
-                                    description="处理分配给我的工单"
-                                    href="/dashboard/tickets"
-                                    icon="🎫"
-                                />
-                            </>
-                        )}
+                    {/* 最近消息 */}
+                    <div className="rounded-xl bg-white shadow-sm border border-gray-200">
+                        <div className="p-6 border-b border-gray-200">
+                            <h2 className="text-lg font-semibold text-gray-900">最近消息</h2>
+                        </div>
+                        <div className="divide-y divide-gray-200">
+                            {stats.recentMessages.map((message) => (
+                                <div key={message.id} className="p-4 hover:bg-gray-50 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                            <span className="text-blue-600 font-medium text-sm">
+                                                {message.sender.name.charAt(0)}
+                                            </span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-sm font-medium text-gray-900">{message.subject}</p>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                来自: {message.sender.name} • {new Date(message.createdAt).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                        {!message.isRead && (
+                                            <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
-                {session.user.role === "STAFF" && (
-                    <div className="mt-10">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">
-                            最近跟进的客户
-                        </h3>
-                        <RecentCustomers userId={session.user.id} />
-                    </div>
-                )}
-            </div>
-        </main>
-    );
-}
-
-// ✅ 统计卡片组件
-function StatCard({
-    title,
-    value,
-    color,
-}: {
-    title: string;
-    value: number;
-    color: "blue" | "green" | "purple" | "orange";
-}) {
-    const colors = {
-        blue: "bg-blue-50 text-blue-600",
-        green: "bg-green-50 text-green-600",
-        purple: "bg-purple-50 text-purple-600",
-        orange: "bg-orange-50 text-orange-600",
-    };
-
-    return (
-        <div className={`rounded-lg p-6 ${colors[color]}`}>
-            <h3 className="text-sm font-medium">{title}</h3>
-            <p className="mt-2 text-3xl font-bold">{value}</p>
-        </div>
-    );
-}
-
-// ✅ 快捷操作卡片
-function QuickActionCard({
-    title,
-    description,
-    href,
-    icon,
-}: {
-    title: string;
-    description: string;
-    href: string;
-    icon: string;
-}) {
-    return (
-        <Link
-            href={href}
-            className="rounded-lg border border-gray-200 bg-white p-6 hover:border-blue-500 hover:shadow-md transition-all"
-        >
-            <div className="text-3xl mb-2">{icon}</div>
-            <h4 className="font-semibold text-gray-900">{title}</h4>
-            <p className="mt-1 text-sm text-gray-600">{description}</p>
-        </Link>
-    );
-}
-
-// ✅ 最近客户组件
-async function RecentCustomers({ userId }: { userId: string }) {
-    const customers = await getRecentCustomers(userId);
-
-    if (customers.length === 0) {
-        return (
-            <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
-                <p className="text-gray-500">暂无客户数据</p>
-            </div>
-        );
-    }
-
-    return (
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-            <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                    <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                            客户名称
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                            邮箱
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                            电话
-                        </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                            操作
-                        </th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                    {customers.map((customer) => (
-                        <tr key={customer.id} className="hover:bg-gray-50">
-                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                                {customer.name}
-                            </td>
-                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                                {customer.email}
-                            </td>
-                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                                {customer.phone}
-                            </td>
-                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
-                                <Link
-                                    href={`/dashboard/customers/${customer.id}`}
-                                    className="text-blue-600 hover:text-blue-900"
-                                >
-                                    查看
-                                </Link>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+            </PageContainer>
+        </DashboardLayout>
     );
 }
