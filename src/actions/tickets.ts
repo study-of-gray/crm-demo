@@ -426,3 +426,58 @@ export async function updateTicketStatus(
         return { success: false, message: "更新失败" };
     }
 }
+
+// ✅ 获取单个工单详情（员工）
+export async function getTicketById(ticketId: string) {
+    try {
+        const session = await auth();
+        if (!session || session.user.type !== "employee") {
+            return null;
+        }
+
+        const ticket = await prisma.ticket.findUnique({
+            where: { id: ticketId },
+            include: {
+                customer: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    },
+                },
+                assignedTo: {
+                    select: {
+                        id: true,
+                        name: true,
+                        role: true,
+                    },
+                },
+                replies: {
+                    include: {
+                        authorUser: {
+                            select: {
+                                id: true,
+                                name: true,
+                                role: true,
+                            },
+                        },
+                        authorCustomer: {
+                            select: {
+                                id: true,
+                                name: true,
+                            },
+                        },
+                    },
+                    orderBy: {
+                        createdAt: "asc",
+                    },
+                },
+            },
+        });
+
+        return ticket;
+    } catch (error) {
+        console.error("获取工单详情失败:", error);
+        return null;
+    }
+}

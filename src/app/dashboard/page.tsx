@@ -106,6 +106,12 @@ export default async function DashboardPage() {
                                         href="/dashboard/messages"
                                         icon="💬"
                                     />
+                                    <QuickActionCard
+                                        title="工单管理"
+                                        description="处理客户提交的工单"
+                                        href="/dashboard/tickets"
+                                        icon="🎫"
+                                    />
                                 </>
                             )}
 
@@ -128,6 +134,12 @@ export default async function DashboardPage() {
                                     description="录入新客户"
                                     href="/dashboard/customers/new"
                                     icon="➕"
+                                />
+                                <QuickActionCard
+                                    title="我的工单"
+                                    description="处理分配给我的工单"
+                                    href="/dashboard/tickets"
+                                    icon="🎫"
                                 />
                             </>
                         )}
