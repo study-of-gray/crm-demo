@@ -1,100 +1,140 @@
-"use client";
+import Link from "next/link";
+import PortalLayout from "@/components/ui/layouts/PortalLayout";
+import PageContainer from "@/components/ui/PageContainer";
+import { changeCustomerPassword } from "@/actions/customer-profile";
+import { redirect } from "next/navigation";
+import { Key, Lock, CheckCircle, AlertTriangle } from "lucide-react";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { changeCustomerPassword } from "@/actions/change-password";
+export default async function ChangePasswordPage() {
+    async function handleChangePassword(formData: FormData) {
+        "use server";
 
-export default function ChangePasswordPage() {
-    const router = useRouter();
-    const [currentPassword, setCurrentPassword] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState("");
-    const [error, setError] = useState("");
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError("");
-        setMessage("");
+        const currentPassword = formData.get("currentPassword") as string;
+        const newPassword = formData.get("newPassword") as string;
+        const confirmPassword = formData.get("confirmPassword") as string;
 
         if (!currentPassword || !newPassword || !confirmPassword) {
-            setError("所有字段不能为空");
-            setLoading(false);
-            return;
+            throw new Error("请填写所有字段");
         }
 
         if (newPassword !== confirmPassword) {
-            setError("两次密码不一致");
-            setLoading(false);
-            return;
+            throw new Error("两次输入的新密码不一致");
         }
 
         if (newPassword.length < 6) {
-            setError("新密码至少 6 位");
-            setLoading(false);
-            return;
+            throw new Error("新密码长度至少为6位");
         }
 
-        const session = await fetch("/api/auth/session").then(r => r.json());
+        const result = await changeCustomerPassword(currentPassword, newPassword);
 
-        const result = await changeCustomerPassword(
-            session.user.email,
-            currentPassword,
-            newPassword
-        );
-
-        if (result.success) {
-            setMessage(result.message);
-            setTimeout(() => router.push("/portal"), 1200);
-        } else {
-            setError(result.message || "修改失败");
+        if (!result.success) {
+            throw new Error(result.message);
         }
 
-        setLoading(false);
-    };
+        redirect("/portal/profile?passwordChanged=true");
+    }
 
     return (
-        <main className="flex min-h-screen items-center justify-center bg-gray-50">
-            <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6 rounded-lg bg-white p-8 shadow-md">
-                <h1 className="text-2xl font-bold text-center">修改密码</h1>
+        <PortalLayout>
+            <PageContainer
+                title="修改密码"
+                description="定期更换密码以确保账户安全"
+            >
+                <div className="max-w-2xl mx-auto">
+                    <div className="rounded-xl bg-white shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="p-6 border-b border-gray-200">
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                                    <Key className="h-5 w-5 text-blue-600" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-semibold text-gray-900">修改密码</h2>
+                                    <p className="text-sm text-gray-600 mt-1">建议定期更换密码以确保账户安全</p>
+                                </div>
+                            </div>
+                        </div>
 
-                {error && <div className="rounded bg-red-50 p-3 text-sm text-red-700">{error}</div>}
-                {message && <div className="rounded bg-green-50 p-3 text-sm text-green-700">{message}</div>}
+                        <form action={handleChangePassword} className="p-6 space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <Lock className="h-4 w-4 inline mr-2" />
+                                    当前密码 <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="password"
+                                    name="currentPassword"
+                                    required
+                                    className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    placeholder="请输入当前密码"
+                                />
+                            </div>
 
-                <div className="space-y-4">
-                    <input
-                        type="password"
-                        placeholder="当前密码"
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        className="w-full rounded border px-3 py-2"
-                    />
-                    <input
-                        type="password"
-                        placeholder="新密码"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full rounded border px-3 py-2"
-                    />
-                    <input
-                        type="password"
-                        placeholder="确认新密码"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full rounded border px-3 py-2"
-                    />
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <Key className="h-4 w-4 inline mr-2" />
+                                    新密码 <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="password"
+                                    name="newPassword"
+                                    required
+                                    minLength={6}
+                                    className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    placeholder="请输入新密码（至少6位）"
+                                />
+                                <p className="mt-1 text-xs text-gray-500">密码长度至少为6位字符</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <CheckCircle className="h-4 w-4 inline mr-2" />
+                                    确认新密码 <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="password"
+                                    name="confirmPassword"
+                                    required
+                                    minLength={6}
+                                    className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    placeholder="请再次输入新密码"
+                                />
+                            </div>
+
+                            {/* 密码安全提示 */}
+                            <div className="rounded-lg bg-blue-50 p-4">
+                                <div className="flex items-start gap-3">
+                                    <AlertTriangle className="h-5 w-5 text-blue-600 mt-0.5" />
+                                    <div>
+                                        <h3 className="text-sm font-medium text-blue-900">密码安全提示</h3>
+                                        <ul className="mt-2 text-sm text-blue-700 space-y-1">
+                                            <li>• 使用至少8个字符的组合</li>
+                                            <li>• 包含大小写字母、数字和特殊符号</li>
+                                            <li>• 避免使用生日、姓名等容易被猜到的信息</li>
+                                            <li>• 不要与其他网站使用相同的密码</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-4 pt-4 border-t border-gray-200">
+                                <Link
+                                    href="/portal/profile"
+                                    className="rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-50 transition-colors"
+                                >
+                                    取消
+                                </Link>
+                                <button
+                                    type="submit"
+                                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 transition-colors"
+                                >
+                                    <Key className="h-4 w-4" />
+                                    确认修改
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full rounded bg-blue-600 py-2 text-white disabled:opacity-50"
-                >
-                    {loading ? "提交中..." : "修改密码"}
-                </button>
-            </form>
-        </main>
+            </PageContainer>
+        </PortalLayout>
     );
 }

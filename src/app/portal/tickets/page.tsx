@@ -1,15 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import PortalLayout from "@/components/ui/layouts/PortalLayout";
+import PageContainer from "@/components/ui/PageContainer";
 import { getCustomerTickets } from "@/actions/tickets";
 import { formatDate } from "@/lib/utils";
+import EmptyState from "@/components/ui/EmptyState";
+import { useState, useEffect } from "react";
+import { Ticket, Plus, Search, Filter, Clock, CheckCircle, AlertCircle, XCircle } from "lucide-react";
+import Link from "next/link";
 
 export default function TicketsPage() {
-    const router = useRouter();
     const [tickets, setTickets] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [filter, setFilter] = useState<string>("all");
 
     useEffect(() => {
         loadTickets();
@@ -29,175 +32,264 @@ export default function TicketsPage() {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case "OPEN":
-                return <span className="inline-flex rounded-full bg-blue-100 px-2 text-xs font-semibold text-blue-800">待处理</span>;
+                return (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-800">
+                        <Clock className="h-3 w-3" />
+                        待处理
+                    </span>
+                );
             case "IN_PROGRESS":
-                return <span className="inline-flex rounded-full bg-yellow-100 px-2 text-xs font-semibold text-yellow-800">处理中</span>;
+                return (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800">
+                        <AlertCircle className="h-3 w-3" />
+                        处理中
+                    </span>
+                );
             case "RESOLVED":
-                return <span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold text-green-800">已解决</span>;
+                return (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
+                        <CheckCircle className="h-3 w-3" />
+                        已解决
+                    </span>
+                );
             case "CLOSED":
-                return <span className="inline-flex rounded-full bg-gray-100 px-2 text-xs font-semibold text-gray-800">已关闭</span>;
+                return (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-800">
+                        <XCircle className="h-3 w-3" />
+                        已关闭
+                    </span>
+                );
             default:
-                return <span className="inline-flex rounded-full bg-gray-100 px-2 text-xs font-semibold text-gray-800">{status}</span>;
+                return (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-800">
+                        {status}
+                    </span>
+                );
         }
     };
 
     const getPriorityBadge = (priority: string) => {
         switch (priority) {
             case "LOW":
-                return <span className="inline-flex rounded-full bg-gray-100 px-2 text-xs font-semibold text-gray-800">低</span>;
+                return <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-800">低</span>;
             case "MEDIUM":
-                return <span className="inline-flex rounded-full bg-blue-100 px-2 text-xs font-semibold text-blue-800">中</span>;
+                return <span className="inline-flex rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-800">中</span>;
             case "HIGH":
-                return <span className="inline-flex rounded-full bg-orange-100 px-2 text-xs font-semibold text-orange-800">高</span>;
+                return <span className="inline-flex rounded-full bg-orange-100 px-2 py-1 text-xs font-semibold text-orange-800">高</span>;
             case "URGENT":
-                return <span className="inline-flex rounded-full bg-red-100 px-2 text-xs font-semibold text-red-800">紧急</span>;
+                return <span className="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800">紧急</span>;
             default:
-                return <span className="inline-flex rounded-full bg-gray-100 px-2 text-xs font-semibold text-gray-800">{priority}</span>;
+                return <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-800">{priority}</span>;
         }
     };
 
+    const filteredTickets = tickets.filter(ticket => {
+        if (filter === "all") return true;
+        return ticket.status === filter;
+    });
+
     if (loading) {
         return (
-            <main className="flex min-h-screen items-center justify-center bg-gray-50">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">加载中...</p>
-                </div>
-            </main>
+            <PortalLayout>
+                <PageContainer title="我的工单" description="加载中...">
+                    <div className="flex justify-center py-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                    </div>
+                </PageContainer>
+            </PortalLayout>
         );
     }
 
     return (
-        <main className="min-h-screen bg-gray-50">
-            {/* 顶部导航 */}
-            <header className="bg-white shadow">
-                <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <button
-                                onClick={() => router.back()}
-                                className="text-gray-600 hover:text-gray-900"
-                            >
-                                ← 返回
-                            </button>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">我的工单</h1>
-                                <p className="mt-1 text-sm text-gray-600">
-                                    查看和管理您的工单
-                                </p>
-                            </div>
+        <PortalLayout>
+            <PageContainer
+                title="我的工单"
+                description="提交和查看您的工单"
+                actions={
+                    <Link
+                        href="/portal/tickets/new"
+                        className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 transition-colors"
+                    >
+                        <Plus className="h-4 w-4" />
+                        提交工单
+                    </Link>
+                }
+            >
+                {/* 筛选器 */}
+                <div className="mb-6 rounded-xl bg-white p-4 shadow-sm border border-gray-200">
+                    <div className="flex flex-wrap items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <Filter className="h-5 w-5 text-gray-400" />
+                            <span className="text-sm font-medium text-gray-700">筛选:</span>
                         </div>
-                        <div className="flex gap-4">
-                            <Link
-                                href="/portal/tickets/new"
-                                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+
+                        {[
+                            { value: "all", label: "全部" },
+                            { value: "OPEN", label: "待处理" },
+                            { value: "IN_PROGRESS", label: "处理中" },
+                            { value: "RESOLVED", label: "已解决" },
+                            { value: "CLOSED", label: "已关闭" },
+                        ].map((option) => (
+                            <button
+                                key={option.value}
+                                onClick={() => setFilter(option.value)}
+                                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${filter === option.value
+                                    ? "bg-blue-100 text-blue-700"
+                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    }`}
                             >
-                                提交工单
-                            </Link>
-                            <Link
-                                href="/portal"
-                                className="rounded-md bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-500"
-                            >
-                                客户门户
-                            </Link>
+                                {option.label}
+                            </button>
+                        ))}
+
+                        <div className="ml-auto relative">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="搜索工单..."
+                                className="rounded-lg border border-gray-300 py-2 pl-9 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            />
                         </div>
                     </div>
                 </div>
-            </header>
 
-            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-                {tickets.length === 0 ? (
-                    <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
-                        <svg
-                            className="mx-auto h-12 w-12 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                            />
-                        </svg>
-                        <h3 className="mt-2 text-sm font-medium text-gray-900">暂无工单</h3>
-                        <p className="mt-1 text-sm text-gray-500">
-                            遇到问题？提交一个工单，我们的技术支持团队会尽快为您处理。
-                        </p>
-                        <div className="mt-6">
-                            <Link
-                                href="/portal/tickets/new"
-                                className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
-                            >
-                                提交第一个工单
-                            </Link>
-                        </div>
-                    </div>
+                {filteredTickets.length === 0 ? (
+                    <EmptyState
+                        icon={Ticket}
+                        title="暂无工单"
+                        description="您还没有提交任何工单，遇到问题？立即提交一个工单吧。"
+                        action={{ label: "提交工单", href: "/portal/tickets/new" }}
+                    />
                 ) : (
-                    <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        工单号
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        标题
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        状态
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        优先级
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        处理人
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        创建时间
-                                    </th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        操作
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 bg-white">
-                                {tickets.map((ticket) => (
-                                    <tr key={ticket.id} className="hover:bg-gray-50">
-                                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                            #{ticket.id.slice(-6).toUpperCase()}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                                            {ticket.title}
-                                        </td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-sm">
+                    <div className="space-y-4">
+                        {filteredTickets.map((ticket) => (
+                            <div
+                                key={ticket.id}
+                                className="rounded-xl bg-white p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                            >
+                                <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <h3 className="text-lg font-medium text-gray-900">{ticket.title}</h3>
                                             {getStatusBadge(ticket.status)}
-                                        </td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-sm">
                                             {getPriorityBadge(ticket.priority)}
-                                        </td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                                            {ticket.assignedTo?.name || "未分配"}
-                                        </td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                                            {formatDate(ticket.createdAt)}
-                                        </td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
+                                        </div>
+
+                                        <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                                            {ticket.description}
+                                        </p>
+
+                                        <div className="flex items-center gap-6 text-sm text-gray-500">
+                                            <span>工单号: #{ticket.id.slice(-6).toUpperCase()}</span>
+                                            <span>处理人: {ticket.assignedTo?.name || "未分配"}</span>
+                                            <span>创建时间: {formatDate(ticket.createdAt)}</span>
+                                            <span>最后更新: {formatDate(ticket.updatedAt)}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="ml-6 flex flex-col gap-2">
+                                        <Link
+                                            href={`/portal/tickets/${ticket.id}`}
+                                            className="rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition-colors text-center"
+                                        >
+                                            查看详情
+                                        </Link>
+                                        {ticket.status !== "CLOSED" && (
                                             <Link
-                                                href={`/portal/tickets/${ticket.id}`}
-                                                className="text-blue-600 hover:text-blue-900"
+                                                href={`/portal/tickets/${ticket.id}#reply`}
+                                                className="rounded-lg bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors text-center"
                                             >
-                                                查看详情
+                                                回复工单
                                             </Link>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
-            </div>
-        </main>
+
+                {/* 工单统计 */}
+                <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-4">
+                    <div className="rounded-xl bg-white p-4 shadow-sm border border-gray-200">
+                        <div className="flex items-center">
+                            <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                                <Ticket className="h-5 w-5 text-blue-600" />
+                            </div>
+                            <div className="ml-4">
+                                <p className="text-sm font-medium text-gray-500">总工单数</p>
+                                <p className="text-2xl font-semibold text-gray-900">{tickets.length}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-xl bg-white p-4 shadow-sm border border-gray-200">
+                        <div className="flex items-center">
+                            <div className="h-10 w-10 rounded-lg bg-yellow-100 flex items-center justify-center">
+                                <Clock className="h-5 w-5 text-yellow-600" />
+                            </div>
+                            <div className="ml-4">
+                                <p className="text-sm font-medium text-gray-500">待处理</p>
+                                <p className="text-2xl font-semibold text-gray-900">
+                                    {tickets.filter(t => t.status === "OPEN").length}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-xl bg-white p-4 shadow-sm border border-gray-200">
+                        <div className="flex items-center">
+                            <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
+                                <CheckCircle className="h-5 w-5 text-green-600" />
+                            </div>
+                            <div className="ml-4">
+                                <p className="text-sm font-medium text-gray-500">已解决</p>
+                                <p className="text-2xl font-semibold text-gray-900">
+                                    {tickets.filter(t => t.status === "RESOLVED").length}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-xl bg-white p-4 shadow-sm border border-gray-200">
+                        <div className="flex items-center">
+                            <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                                <AlertCircle className="h-5 w-5 text-purple-600" />
+                            </div>
+                            <div className="ml-4">
+                                <p className="text-sm font-medium text-gray-500">处理中</p>
+                                <p className="text-2xl font-semibold text-gray-900">
+                                    {tickets.filter(t => t.status === "IN_PROGRESS").length}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 帮助信息 */}
+                <div className="mt-8 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+                    <div className="flex items-start gap-4">
+                        <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <Ticket className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-semibold text-blue-900">工单提交指南</h3>
+                            <ul className="mt-2 text-sm text-blue-700 space-y-1">
+                                <li>• 请详细描述您遇到的问题，包括操作步骤、错误信息等</li>
+                                <li>• 紧急问题请选择"紧急"优先级，我们会优先处理</li>
+                                <li>• 工单提交后，我们的技术支持团队会在工作时间内尽快回复</li>
+                                <li>• 您可以在工单详情页查看处理进度并添加回复</li>
+                            </ul>
+                            <div className="mt-4">
+                                <p className="text-sm text-blue-700">
+                                    <strong>工作时间：</strong>周一至周五 9:00-18:00<br />
+                                    <strong>紧急联系：</strong>emergency@example.com
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </PageContainer>
+        </PortalLayout>
     );
 }

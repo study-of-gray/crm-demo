@@ -1,311 +1,224 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
+import PortalLayout from "@/components/ui/layouts/PortalLayout";
+import PageContainer from "@/components/ui/PageContainer";
+import StatCard from "@/components/ui/StatCard";
+import { getCustomerDashboardStats } from "@/actions/customer-dashboard";
+import {
+    User,
+    MessageSquare,
+    FileText,
+    Ticket,
+    Bell,
+    TrendingUp
+} from "lucide-react";
 import Link from "next/link";
-import { getCustomerProfile } from "@/services/customer.service";
-import { getUnreadMessageCount } from "@/actions/messages"; // ✅ 导入
-import { formatDate } from "@/lib/utils";
 
 export default async function PortalPage() {
-    const session = await auth();
-
-    if (!session || session.user.type !== "customer") {
-        redirect("/login");
-    }
-
-    const customer = await getCustomerProfile(session.user.email!);
-    const unreadCount = await getUnreadMessageCount(); // ✅ 获取未读数量
-
-    if (!customer) {
-        redirect("/login");
-    }
+    const stats = await getCustomerDashboardStats();
 
     return (
-        <main className="min-h-screen bg-gray-50">
-            {/* 顶部导航 */}
-            <header className="bg-white shadow">
-                <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">
-                                客户门户
-                            </h1>
-                            <p className="mt-1 text-sm text-gray-600">
-                                欢迎回来，{customer.name}！
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <span className="text-sm text-gray-600">
-                                客户编号：{customer.id.slice(-8).toUpperCase()}
-                            </span>
-                            <Link
-                                href="/api/auth/signout"
-                                className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500"
-                            >
-                                退出登录
-                            </Link>
-                        </div>
+        <PortalLayout>
+            <PageContainer
+                title="客户门户"
+                description={`欢迎回来，${stats.customerName}！这里是您的专属工作台。`}
+            >
+                {/* 统计卡片 */}
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    <StatCard
+                        title="未读消息"
+                        value={stats.unreadMessages}
+                        icon={MessageSquare}
+                        color="blue"
+                    />
+                    <StatCard
+                        title="我的文档"
+                        value={stats.totalDocuments}
+                        icon={FileText}
+                        color="green"
+                    />
+                    <StatCard
+                        title="待处理工单"
+                        value={stats.openTickets}
+                        icon={Ticket}
+                        color="yellow"
+                    />
+                    <StatCard
+                        title="账户状态"
+                        value="正常"
+                        icon={User}
+                        color="purple"
+                    />
+                </div>
+
+                {/* 快捷操作 */}
+                <div className="mt-8">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-4">快捷操作</h2>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <Link
+                            href="/portal/profile"
+                            className="flex items-center gap-4 rounded-xl bg-white p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                        >
+                            <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                                <User className="h-6 w-6 text-blue-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-medium text-gray-900">个人资料</h3>
+                                <p className="text-xs text-gray-500 mt-1">查看和修改个人信息</p>
+                            </div>
+                        </Link>
+
+                        <Link
+                            href="/portal/messages"
+                            className="flex items-center gap-4 rounded-xl bg-white p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                        >
+                            <div className="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center">
+                                <MessageSquare className="h-6 w-6 text-green-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-medium text-gray-900">消息中心</h3>
+                                <p className="text-xs text-gray-500 mt-1">查看销售代表留言</p>
+                            </div>
+                        </Link>
+
+                        <Link
+                            href="/portal/documents"
+                            className="flex items-center gap-4 rounded-xl bg-white p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                        >
+                            <div className="h-12 w-12 rounded-lg bg-yellow-100 flex items-center justify-center">
+                                <FileText className="h-6 w-6 text-yellow-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-medium text-gray-900">我的文档</h3>
+                                <p className="text-xs text-gray-500 mt-1">下载合同和资料</p>
+                            </div>
+                        </Link>
+
+                        <Link
+                            href="/portal/tickets"
+                            className="flex items-center gap-4 rounded-xl bg-white p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                        >
+                            <div className="h-12 w-12 rounded-lg bg-purple-100 flex items-center justify-center">
+                                <Ticket className="h-6 w-6 text-purple-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-medium text-gray-900">我的工单</h3>
+                                <p className="text-xs text-gray-500 mt-1">提交和查看工单</p>
+                            </div>
+                        </Link>
                     </div>
                 </div>
-            </header>
 
-            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-                    {/* 左侧：客户信息 */}
-                    <div className="lg:col-span-2 space-y-8">
-                        {/* 基本信息卡片 */}
-                        <div className="rounded-lg border border-gray-200 bg-white p-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-lg font-medium text-gray-900">
-                                    基本信息
-                                </h2>
+                {/* 最近活动 */}
+                <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    {/* 最近消息 */}
+                    <div className="rounded-xl bg-white shadow-sm border border-gray-200">
+                        <div className="p-6 border-b border-gray-200">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-lg font-semibold text-gray-900">最近消息</h2>
                                 <Link
-                                    href="/portal/profile"
-                                    className="text-sm text-blue-600 hover:text-blue-900"
+                                    href="/portal/messages"
+                                    className="text-sm font-medium text-blue-600 hover:text-blue-500"
                                 >
-                                    编辑资料
+                                    查看全部
                                 </Link>
                             </div>
-                            <dl className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-                                <div>
-                                    <dt className="text-sm font-medium text-gray-500">客户名称</dt>
-                                    <dd className="mt-1 text-sm text-gray-900">{customer.name}</dd>
-                                </div>
-                                <div>
-                                    <dt className="text-sm font-medium text-gray-500">邮箱</dt>
-                                    <dd className="mt-1 text-sm text-gray-900">{customer.email}</dd>
-                                </div>
-                                <div>
-                                    <dt className="text-sm font-medium text-gray-500">电话</dt>
-                                    <dd className="mt-1 text-sm text-gray-900">{customer.phone || "未填写"}</dd>
-                                </div>
-                                <div>
-                                    <dt className="text-sm font-medium text-gray-500">注册时间</dt>
-                                    <dd className="mt-1 text-sm text-gray-900">
-                                        {formatDate(customer.createdAt)}
-                                    </dd>
-                                </div>
-                            </dl>
                         </div>
-
-                        {/* 我的负责人 */}
-                        <div className="rounded-lg border border-gray-200 bg-white p-6">
-                            <h2 className="mb-6 text-lg font-medium text-gray-900">
-                                我的负责人
-                            </h2>
-                            {customer.assignedStaff && customer.assignedStaff.length > 0 ? (
-                                <div className="space-y-4">
-                                    {customer.assignedStaff.map((assignment) => (
-                                        <div key={assignment.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                                            <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-                                                <span className="text-blue-600 font-medium text-lg">
-                                                    {assignment.user.name.charAt(0)}
+                        <div className="divide-y divide-gray-200">
+                            {stats.recentMessages.length > 0 ? (
+                                stats.recentMessages.map((message) => (
+                                    <div key={message.id} className="p-4 hover:bg-gray-50 transition-colors">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                                <span className="text-blue-600 font-medium text-sm">
+                                                    {message.sender.name.charAt(0)}
                                                 </span>
                                             </div>
                                             <div className="flex-1">
-                                                <p className="text-sm font-medium text-gray-900">
-                                                    {assignment.user.name}
-                                                </p>
-                                                <p className="text-xs text-gray-500">
-                                                    {assignment.user.role === "ADMIN"
-                                                        ? "系统管理员"
-                                                        : assignment.user.role === "MANAGER"
-                                                            ? "部门经理"
-                                                            : "销售代表"}
-                                                </p>
+                                                <p className="text-sm font-medium text-gray-900">{message.subject}</p>
                                                 <p className="text-xs text-gray-500 mt-1">
-                                                    邮箱：{assignment.user.email}
+                                                    来自: {message.sender.name} • {new Date(message.createdAt).toLocaleDateString()}
                                                 </p>
                                             </div>
-                                            <div className="flex gap-2">
-                                                <a
-                                                    href={`mailto:${assignment.user.email}`}
-                                                    className="rounded-md bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
-                                                >
-                                                    发邮件
-                                                </a>
-                                                <a
-                                                    href={`tel:${assignment.user.phone || ""}`}
-                                                    className="rounded-md bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100"
-                                                >
-                                                    打电话
-                                                </a>
-                                            </div>
+                                            {!message.isRead && (
+                                                <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+                                            )}
                                         </div>
-                                    ))}
-                                </div>
+                                    </div>
+                                ))
                             ) : (
-                                <div className="text-center py-8">
-                                    <p className="text-gray-500">暂未分配负责人</p>
-                                    <p className="text-sm text-gray-400 mt-2">
-                                        如有需要，请联系客服分配专属销售代表
-                                    </p>
+                                <div className="p-6 text-center">
+                                    <p className="text-sm text-gray-500">暂无消息</p>
                                 </div>
-                            )}
-                        </div>
-
-                        {/* 公司信息 */}
-                        <div className="rounded-lg border border-gray-200 bg-white p-6">
-                            <h2 className="mb-6 text-lg font-medium text-gray-900">
-                                所属公司
-                            </h2>
-                            {customer.companyCustomers && customer.companyCustomers.length > 0 ? (
-                                <div className="space-y-4">
-                                    {customer.companyCustomers.map((cc) => (
-                                        <div key={cc.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                                            <div className="h-12 w-12 rounded-lg bg-indigo-100 flex items-center justify-center">
-                                                <span className="text-indigo-600 font-medium">
-                                                    {cc.company.name.charAt(0)}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-900">
-                                                    {cc.company.name}
-                                                </p>
-                                                <p className="text-xs text-gray-500">
-                                                    合作客户
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-gray-500">暂无公司信息</p>
                             )}
                         </div>
                     </div>
 
-                    {/* 右侧：快捷操作 */}
-                    <div className="space-y-8">
-                        {/* 账户安全 */}
-                        <div className="rounded-lg border border-gray-200 bg-white p-6">
-                            <h2 className="mb-4 text-lg font-medium text-gray-900">
-                                账户安全
-                            </h2>
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">
-                                            登录密码
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            建议定期更换密码
-                                        </p>
-                                    </div>
-                                    <Link
-                                        href="/portal/change-password"
-                                        className="rounded-md bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
-                                    >
-                                        修改密码
-                                    </Link>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">
-                                            账户状态
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            正常使用中
-                                        </p>
-                                    </div>
-                                    <span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold text-green-800">
-                                        正常
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 快捷操作 */}
-                        <div className="rounded-lg border border-gray-200 bg-white p-6">
-                            <h2 className="mb-4 text-lg font-medium text-gray-900">
-                                快捷操作
-                            </h2>
-                            <div className="space-y-3">
-                                <Link
-                                    href="/portal/profile"
-                                    className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-                                >
-                                    <span className="text-xl">👤</span>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">
-                                            个人资料
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            查看和修改个人信息
-                                        </p>
-                                    </div>
-                                </Link>
-                                <Link
-                                    href="/portal/messages"
-                                    className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors relative"
-                                >
-                                    <span className="text-xl">💬</span>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">
-                                            消息中心
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            查看销售代表留言
-                                        </p>
-                                    </div>
-                                    {/* ✅ 未读消息徽章 */}
-                                    {unreadCount > 0 && (
-                                        <span className="absolute top-2 right-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
-                                            {unreadCount}
-                                        </span>
-                                    )}
-                                </Link>
-                                <Link
-                                    href="/portal/documents"
-                                    className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-                                >
-                                    <span className="text-xl">📄</span>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">
-                                            我的文档
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            下载合同和资料
-                                        </p>
-                                    </div>
-                                </Link>
+                    {/* 最近工单 */}
+                    <div className="rounded-xl bg-white shadow-sm border border-gray-200">
+                        <div className="p-6 border-b border-gray-200">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-lg font-semibold text-gray-900">最近工单</h2>
                                 <Link
                                     href="/portal/tickets"
-                                    className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                                    className="text-sm font-medium text-blue-600 hover:text-blue-500"
                                 >
-                                    <span className="text-xl">🎫</span>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">
-                                            我的工单
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            提交和查看工单
-                                        </p>
-                                    </div>
+                                    查看全部
                                 </Link>
                             </div>
                         </div>
-
-                        {/* 帮助中心 */}
-                        <div className="rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
-                            <h2 className="mb-2 text-lg font-medium text-gray-900">
-                                需要帮助？
-                            </h2>
-                            <p className="text-sm text-gray-600 mb-4">
-                                如果您有任何问题，请联系您的专属销售代表或客服团队。
-                            </p>
-                            <a
-                                href="mailto:support@example.com"
-                                className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-500"
-                            >
-                                联系客服
-                                <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                            </a>
+                        <div className="divide-y divide-gray-200">
+                            {stats.recentTickets.length > 0 ? (
+                                stats.recentTickets.map((ticket) => (
+                                    <div key={ticket.id} className="p-4 hover:bg-gray-50 transition-colors">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-900">{ticket.title}</p>
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    状态: {ticket.status === "OPEN" ? "待处理" :
+                                                        ticket.status === "IN_PROGRESS" ? "处理中" :
+                                                            ticket.status === "RESOLVED" ? "已解决" : "已关闭"} •
+                                                    {new Date(ticket.createdAt).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                            <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${ticket.status === "OPEN" ? "bg-blue-100 text-blue-800" :
+                                                ticket.status === "IN_PROGRESS" ? "bg-yellow-100 text-yellow-800" :
+                                                    ticket.status === "RESOLVED" ? "bg-green-100 text-green-800" :
+                                                        "bg-gray-100 text-gray-800"
+                                                }`}>
+                                                {ticket.status === "OPEN" ? "待处理" :
+                                                    ticket.status === "IN_PROGRESS" ? "处理中" :
+                                                        ticket.status === "RESOLVED" ? "已解决" : "已关闭"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="p-6 text-center">
+                                    <p className="text-sm text-gray-500">暂无工单</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
-            </div>
-        </main>
+
+                {/* 帮助与支持 */}
+                <div className="mt-8 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-lg font-semibold text-gray-900">需要帮助？</h2>
+                            <p className="text-sm text-gray-600 mt-1">
+                                如果您有任何问题，请联系您的专属销售代表或客服团队。
+                            </p>
+                        </div>
+                        <Link
+                            href="/portal/tickets/new"
+                            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 transition-colors"
+                        >
+                            <Ticket className="h-4 w-4" />
+                            提交工单
+                        </Link>
+                    </div>
+                </div>
+            </PageContainer>
+        </PortalLayout>
     );
 }

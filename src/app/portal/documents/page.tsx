@@ -1,53 +1,19 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import PortalLayout from "@/components/ui/layouts/PortalLayout";
+import PageContainer from "@/components/ui/PageContainer";
 import { getCustomerDocuments } from "@/actions/documents";
+import { formatDate, formatFileSize } from "@/lib/utils";
+import EmptyState from "@/components/ui/EmptyState";
+import { FileText, Download, Eye, Search, Filter } from "lucide-react";
 
-export default function DocumentsPage() {
-    const router = useRouter();
-    const [documents, setDocuments] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        loadDocuments();
-    }, []);
-
-    const loadDocuments = async () => {
-        try {
-            const docs = await getCustomerDocuments();
-            setDocuments(docs);
-        } catch (error) {
-            console.error("加载文档失败:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const formatFileSize = (bytes: number) => {
-        if (bytes === 0) return "0 B";
-        const k = 1024;
-        const sizes = ["B", "KB", "MB", "GB"];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-    };
-
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString("zh-CN", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        });
-    };
+export default async function DocumentsPage() {
+    const documents = await getCustomerDocuments();
 
     const getFileIcon = (mimeType: string) => {
         if (mimeType.includes("pdf")) return "📄";
         if (mimeType.includes("word") || mimeType.includes("doc")) return "📝";
         if (mimeType.includes("excel") || mimeType.includes("sheet")) return "📊";
         if (mimeType.includes("image")) return "🖼️";
-        if (mimeType.includes("zip")) return "🗜️";
+        if (mimeType.includes("zip") || mimeType.includes("compressed")) return "🗜️";
         return "📎";
     };
 
@@ -60,74 +26,45 @@ export default function DocumentsPage() {
         document.body.removeChild(link);
     };
 
-    if (loading) {
-        return (
-            <main className="flex min-h-screen items-center justify-center bg-gray-50">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">加载中...</p>
-                </div>
-            </main>
-        );
-    }
-
     return (
-        <main className="min-h-screen bg-gray-50">
-            {/* 顶部导航 */}
-            <header className="bg-white shadow">
-                <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <button
-                                onClick={() => router.back()}
-                                className="text-gray-600 hover:text-gray-900"
-                            >
-                                ← 返回
-                            </button>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">我的文档</h1>
-                                <p className="mt-1 text-sm text-gray-600">
-                                    下载合同、报价单等重要文档
-                                </p>
-                            </div>
-                        </div>
-                        <Link
-                            href="/portal"
-                            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
-                        >
-                            客户门户
-                        </Link>
+        <PortalLayout>
+            <PageContainer
+                title="我的文档"
+                description="下载合同、报价单等重要文档"
+                actions={
+                    <div className="flex gap-3">
+                        <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-50 transition-colors">
+                            <Filter className="h-4 w-4" />
+                            筛选
+                        </button>
+                    </div>
+                }
+            >
+                {/* 搜索栏 */}
+                <div className="mb-6 rounded-xl bg-white p-4 shadow-sm border border-gray-200">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="搜索文档名称或描述..."
+                            className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
                     </div>
                 </div>
-            </header>
 
-            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
                 {documents.length === 0 ? (
-                    <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
-                        <svg
-                            className="mx-auto h-12 w-12 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            />
-                        </svg>
-                        <h3 className="mt-2 text-sm font-medium text-gray-900">暂无文档</h3>
-                        <p className="mt-1 text-sm text-gray-500">
-                            您的销售代表会上传相关文档到这里
-                        </p>
-                    </div>
+                    <EmptyState
+                        icon={FileText}
+                        title="暂无文档"
+                        description="您的销售代表会上传相关文档到这里，请稍后再查看。"
+                        action={{ label: "刷新页面", href: "/portal/documents" }}
+                    />
                 ) : (
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                         {documents.map((doc) => (
                             <div
                                 key={doc.id}
-                                className="rounded-lg border border-gray-200 bg-white p-6 hover:shadow-md transition-shadow"
+                                className="rounded-xl bg-white p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
                             >
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-center gap-3">
@@ -164,17 +101,47 @@ export default function DocumentsPage() {
                                     </p>
                                 )}
 
-                                <button
-                                    onClick={() => handleDownload(doc.filePath, doc.fileName)}
-                                    className="w-full rounded-md bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition-colors"
-                                >
-                                    下载文档
-                                </button>
+                                <div className="flex gap-2">
+                                    <a
+                                        href={doc.filePath}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex-1 rounded-lg bg-gray-50 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors text-center"
+                                    >
+                                        <Eye className="h-3 w-3 inline mr-1" />
+                                        预览
+                                    </a>
+                                    <button
+                                        onClick={() => handleDownload(doc.filePath, doc.fileName)}
+                                        className="flex-1 rounded-lg bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors text-center"
+                                    >
+                                        <Download className="h-3 w-3 inline mr-1" />
+                                        下载
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
                 )}
-            </div>
-        </main>
+
+                {/* 文档说明 */}
+                <div className="mt-8 rounded-xl bg-blue-50 p-6">
+                    <div className="flex items-start gap-4">
+                        <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <FileText className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-semibold text-blue-900">关于文档下载</h3>
+                            <ul className="mt-2 text-sm text-blue-700 space-y-1">
+                                <li>• 所有文档均为PDF格式，请确保您的设备已安装PDF阅读器</li>
+                                <li>• 下载的文档仅供您个人使用，请勿转发给他人</li>
+                                <li>• 如遇文档无法打开或内容错误，请及时联系您的销售代表</li>
+                                <li>• 文档会定期更新，请留意最新版本</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </PageContainer>
+        </PortalLayout>
     );
 }
