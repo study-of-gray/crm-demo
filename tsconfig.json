@@ -37,7 +37,8 @@
     "src/**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "src/services"
+    "src/services",
+    "src/app/dashboard/employees/[id]/edit/page.tsx"
   ],
   "exclude": [
     "node_modules"
