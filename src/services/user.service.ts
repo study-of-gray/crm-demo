@@ -130,19 +130,18 @@ export async function getEmployeesForManagement(
 
 // ✅ 根据 ID 获取员工
 export async function getEmployeeById(employeeId: string) {
+    if (!employeeId) return null;
+
     return prisma.user.findUnique({
         where: { id: employeeId },
-        include: {
-            companyUsers: {
-                include: {
-                    company: {
-                        select: {
-                            name: true,
-                        },
-                    },
-                },
-            },
-        },
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            role: true,
+            createdAt: true,
+        }
     });
 }
 // ✅ 创建新员工

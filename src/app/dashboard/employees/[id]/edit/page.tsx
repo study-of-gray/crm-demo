@@ -1,8 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getEmployeeById } from "@/services/user.service";
-import { updateEmployee } from "@/services/user.service";
+import { getEmployeeById, updateEmployee } from "@/services/user.service";
 import { getCompanies } from "@/services/company.service";
 
 export default async function EditEmployeePage({
@@ -24,7 +23,6 @@ export default async function EditEmployeePage({
 
     const employee = await getEmployeeById(id);
     const companies = await getCompanies();
-
     if (!employee) {
         redirect("/dashboard/employees");
     }
