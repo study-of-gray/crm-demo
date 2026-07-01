@@ -226,3 +226,36 @@ export async function getSentMessages(senderId: string) {
         return [];
     }
 }
+// ✅ 获取所有消息（员工使用）
+export async function getMessages() {
+    const session = await auth();
+
+    if (!session || session.user.type !== "employee") {
+        return [];
+    }
+
+    const isAdminOrManager = session.user.role === "ADMIN" || session.user.role === "MANAGER";
+
+    const messages = await prisma.message.findMany({
+        where: isAdminOrManager ? {} : { receiver: { assignedStaff: { some: { userId: session.user.id } } } },
+        include: {
+            sender: {
+                select: {
+                    id: true,
+                    name: true,
+                    role: true,
+                },
+            },
+            receiver: {
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                },
+            },
+        },
+        orderBy: { createdAt: "desc" },
+    });
+
+    return messages;
+}

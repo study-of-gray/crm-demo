@@ -1,126 +1,110 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
+import DashboardLayout from "@/components/ui/layouts/DashboardLayout";
+import PageContainer from "@/components/ui/PageContainer";
+import { getDocuments } from "@/actions/documents";
+import { formatDate, formatFileSize } from "@/lib/utils";
+import EmptyState from "@/components/ui/EmptyState";
+import { FileText, Plus, Search, Download, Eye } from "lucide-react";
 import Link from "next/link";
-import { getAllDocuments } from "@/actions/documents";
-import { formatDate } from "@/lib/utils";
 
-export default async function EmployeeDocumentsPage() {
-    const session = await auth();
-
-    if (!session || session.user.type !== "employee") {
-        redirect("/login");
-    }
-
-    const documents = await getAllDocuments(session.user.id, session.user.role);
+export default async function DocumentsPage() {
+    const documents = await getDocuments();
 
     return (
-        <main className="min-h-screen bg-gray-50">
-            {/* 顶部导航 */}
-            <header className="bg-white shadow">
-                <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <Link
-                                href="/dashboard"
-                                className="text-gray-600 hover:text-gray-900"
-                            >
-                                ← 返回员工后台
-                            </Link>
-                            <h1 className="text-2xl font-bold text-gray-900">文档管理</h1>
-                        </div>
-                        <Link
-                            href="/dashboard/documents/upload"
-                            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
-                        >
-                            上传文档
-                        </Link>
+        <DashboardLayout>
+            <PageContainer
+                title="文档管理"
+                description="管理客户文档和资料"
+                actions={
+                    <Link
+                        href="/dashboard/documents/upload"
+                        className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 transition-colors"
+                    >
+                        <Plus className="h-4 w-4" />
+                        上传文档
+                    </Link>
+                }
+            >
+                {/* 搜索栏 */}
+                <div className="mb-6 rounded-xl bg-white p-4 shadow-sm border border-gray-200">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="搜索文档名称或描述..."
+                            className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
                     </div>
                 </div>
-            </header>
 
-            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-                {/* 文档列表 */}
-                <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
-                    {documents.length === 0 ? (
-                        <div className="text-center py-12">
-                            <svg
-                                className="mx-auto h-12 w-12 text-gray-400"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                {documents.length === 0 ? (
+                    <EmptyState
+                        icon={FileText}
+                        title="暂无文档"
+                        description="您还没有上传任何文档，点击上方按钮上传文档。"
+                        action={{ label: "上传文档", href: "/dashboard/documents/upload" }}
+                    />
+                ) : (
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        {documents.map((doc) => (
+                            <div
+                                key={doc.id}
+                                className="rounded-xl bg-white p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                />
-                            </svg>
-                            <h3 className="mt-2 text-sm font-medium text-gray-900">暂无文档</h3>
-                            <p className="mt-1 text-sm text-gray-500">
-                                点击右上角"上传文档"开始上传
-                            </p>
-                        </div>
-                    ) : (
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        文档名称
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        客户
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        上传者
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        上传时间
-                                    </th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        操作
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 bg-white">
-                                {documents.map((doc) => (
-                                    <tr key={doc.id} className="hover:bg-gray-50">
-                                        <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                                            {doc.name}
-                                        </td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                                            {doc.customer.name}
-                                        </td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                                            {doc.uploadedBy.name}
-                                        </td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                                            {formatDate(doc.uploadedAt)}
-                                        </td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
-                                            <a
-                                                href={doc.filePath}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-blue-600 hover:text-blue-900 mr-4"
-                                            >
-                                                预览
-                                            </a>
-                                            <a
-                                                href={doc.filePath}
-                                                download={doc.fileName}
-                                                className="text-blue-600 hover:text-blue-900"
-                                            >
-                                                下载
-                                            </a>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
-                </div>
-            </div>
-        </main>
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                                            <FileText className="h-6 w-6 text-blue-600" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-medium text-gray-900 line-clamp-2">{doc.name}</h3>
+                                            <p className="text-xs text-gray-500 mt-1">{doc.fileName}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 mb-4">
+                                    <div className="flex justify-between text-xs text-gray-500">
+                                        <span>大小</span>
+                                        <span>{formatFileSize(doc.fileSize)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-gray-500">
+                                        <span>客户</span>
+                                        <span>{doc.customer?.name || "未知"}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-gray-500">
+                                        <span>上传时间</span>
+                                        <span>{formatDate(doc.uploadedAt)}</span>
+                                    </div>
+                                </div>
+
+                                {doc.description && (
+                                    <p className="text-xs text-gray-600 mb-4 line-clamp-2">{doc.description}</p>
+                                )}
+
+                                <div className="flex gap-2">
+                                    <a
+                                        href={doc.filePath}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex-1 rounded-lg bg-gray-50 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors text-center"
+                                    >
+                                        <Eye className="h-3 w-3 inline mr-1" />
+                                        预览
+                                    </a>
+                                    <a
+                                        href={doc.filePath}
+                                        download={doc.fileName}
+                                        className="flex-1 rounded-lg bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors text-center"
+                                    >
+                                        <Download className="h-3 w-3 inline mr-1" />
+                                        下载
+                                    </a>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </PageContainer>
+        </DashboardLayout>
     );
 }

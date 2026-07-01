@@ -225,3 +225,35 @@ export async function getAllDocuments(userId: string, role: string) {
         return [];
     }
 }
+// ✅ 获取所有文档（员工使用）
+export async function getDocuments() {
+    const session = await auth();
+
+    if (!session || session.user.type !== "employee") {
+        return [];
+    }
+
+    const isAdminOrManager = session.user.role === "ADMIN" || session.user.role === "MANAGER";
+
+    const documents = await prisma.document.findMany({
+        where: isAdminOrManager ? {} : { customer: { assignedStaff: { some: { userId: session.user.id } } } },
+        include: {
+            customer: {
+                select: {
+                    id: true,
+                    name: true,
+                },
+            },
+            uploadedBy: {
+                select: {
+                    id: true,
+                    name: true,
+                    role: true,
+                },
+            },
+        },
+        orderBy: { uploadedAt: "desc" },
+    });
+
+    return documents;
+}

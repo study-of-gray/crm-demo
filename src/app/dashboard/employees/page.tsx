@@ -1,142 +1,118 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { getEmployeesForManagement } from "@/services/user.service";
-import DeleteEmployeeButton from "@/components/DeleteEmployeeButton"; // ✅ 导入
+import DashboardLayout from "@/components/ui/layouts/DashboardLayout";
+import PageContainer from "@/components/ui/PageContainer";
+import { getEmployees } from "@/actions/employees";
 import { formatDate } from "@/lib/utils";
+import EmptyState from "@/components/ui/EmptyState";
+import { Users, Plus, Search, Shield, Mail, Phone } from "lucide-react";
+import Link from "next/link";
 
 export default async function EmployeesPage() {
-    const session = await auth();
+    const employees = await getEmployees();
 
-    if (!session || session.user.type !== "employee") {
-        redirect("/login");
-    }
-
-    // 只有 ADMIN 和 MANAGER 可以访问
-    if (session.user.role !== "ADMIN" && session.user.role !== "MANAGER") {
-        redirect("/dashboard");
-    }
-
-    const employees = await getEmployeesForManagement(
-        session.user.id,
-        session.user.role
-    );
+    const getRoleBadge = (role: string) => {
+        switch (role) {
+            case "ADMIN":
+                return <span className="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800">管理员</span>;
+            case "MANAGER":
+                return <span className="inline-flex rounded-full bg-purple-100 px-2 py-1 text-xs font-semibold text-purple-800">经理</span>;
+            case "STAFF":
+                return <span className="inline-flex rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-800">员工</span>;
+            default:
+                return <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-800">{role}</span>;
+        }
+    };
 
     return (
-        <main className="min-h-screen bg-gray-50">
-            {/* 顶部导航 */}
-            <header className="bg-white shadow">
-                <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <Link
-                                href="/dashboard"
-                                className="text-gray-600 hover:text-gray-900"
-                            >
-                                ← 返回仪表盘
-                            </Link>
-                            <h1 className="text-2xl font-bold text-gray-900">员工管理</h1>
-                        </div>
-                        <Link
-                            href="/dashboard/employees/new"
-                            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
-                        >
-                            新增员工
-                        </Link>
+        <DashboardLayout>
+            <PageContainer
+                title="员工管理"
+                description="管理系统员工账户和权限"
+                actions={
+                    <Link
+                        href="/dashboard/employees/new"
+                        className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 transition-colors"
+                    >
+                        <Plus className="h-4 w-4" />
+                        新增员工
+                    </Link>
+                }
+            >
+                {/* 搜索栏 */}
+                <div className="mb-6 rounded-xl bg-white p-4 shadow-sm border border-gray-200">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="搜索员工姓名、邮箱或角色..."
+                            className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
                     </div>
                 </div>
-            </header>
 
-            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-                {/* 员工列表 */}
-                <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    姓名
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    邮箱
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    角色
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    所属公司
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    创建时间
-                                </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                                    操作
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 bg-white">
-                            {employees.map((employee) => (
-                                <tr key={employee.id} className="hover:bg-gray-50">
-                                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                                        {employee.name}
-                                    </td>
-                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                                        {employee.email}
-                                    </td>
-                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                                        <span
-                                            className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${employee.role === "ADMIN"
-                                                    ? "bg-red-100 text-red-800"
-                                                    : employee.role === "MANAGER"
-                                                        ? "bg-yellow-100 text-yellow-800"
-                                                        : "bg-green-100 text-green-800"
-                                                }`}
-                                        >
-                                            {employee.role === "ADMIN"
-                                                ? "管理员"
-                                                : employee.role === "MANAGER"
-                                                    ? "经理"
-                                                    : "员工"}
-                                        </span>
-                                    </td>
-                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                                        {employee.companyUsers?.[0]?.company?.name || "未分配"}
-                                    </td>
-                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                                        {formatDate(employee.createdAt)}
-                                    </td>
-                                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
-                                        <Link
-                                            href={`/dashboard/employees/${employee.id}/edit`}
-                                            className="mr-4 text-blue-600 hover:text-blue-900"
-                                        >
-                                            编辑
-                                        </Link>
-                                        {session.user.role === "ADMIN" &&
-                                            employee.id !== session.user.id && (
-                                                <DeleteEmployeeButton
-                                                    employeeId={employee.id}
-                                                    currentUserId={session.user.id}
-                                                />
-                                            )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-
-                    {employees.length === 0 && (
-                        <div className="text-center py-12">
-                            <p className="text-gray-500">暂无员工数据</p>
-                            <Link
-                                href="/dashboard/employees/new"
-                                className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+                {employees.length === 0 ? (
+                    <EmptyState
+                        icon={Users}
+                        title="暂无员工"
+                        description="您还没有添加任何员工，点击上方按钮新增员工。"
+                        action={{ label: "新增员工", href: "/dashboard/employees/new" }}
+                    />
+                ) : (
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        {employees.map((employee) => (
+                            <div
+                                key={employee.id}
+                                className="rounded-xl bg-white p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
                             >
-                                新增第一个员工
-                            </Link>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </main>
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                            <span className="text-blue-600 font-medium text-lg">
+                                                {employee.name.charAt(0)}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-medium text-gray-900">{employee.name}</h3>
+                                            <div className="mt-1">{getRoleBadge(employee.role)}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3 mb-4">
+                                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                                        <Mail className="h-4 w-4 text-gray-400" />
+                                        <span>{employee.email}</span>
+                                    </div>
+                                    {employee.phone && (
+                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                            <Phone className="h-4 w-4 text-gray-400" />
+                                            <span>{employee.phone}</span>
+                                        </div>
+                                    )}
+                                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                                        <Shield className="h-4 w-4 text-gray-400" />
+                                        <span>创建于 {formatDate(employee.createdAt)}</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <Link
+                                        href={`/dashboard/employees/${employee.id}`}
+                                        className="flex-1 rounded-lg bg-gray-50 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors text-center"
+                                    >
+                                        查看详情
+                                    </Link>
+                                    <Link
+                                        href={`/dashboard/employees/${employee.id}/edit`}
+                                        className="flex-1 rounded-lg bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors text-center"
+                                    >
+                                        编辑
+                                    </Link>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </PageContainer>
+        </DashboardLayout>
     );
 }
