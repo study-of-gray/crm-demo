@@ -14,12 +14,12 @@ import {
     Bell
 } from "lucide-react";
 
-export default async function DashboardLayout({
+export default function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const session = await auth();
+    const session = auth();
 
     if (!session || session.user.type !== "employee") {
         redirect("/login");
